@@ -1,3 +1,4 @@
 *.mmk
 *.jar
 *.DS_Store
+/bin/
