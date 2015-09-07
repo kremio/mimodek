@@ -20,10 +20,6 @@ public class Mimodek implements TrackingListener {
 
 	private DataHandler dataHandler;
 
-	//private boolean reset;
-
-	//private boolean autoFood;
-
 	private TUIOClient tuioClient;
 	
 	/** The cells. */
@@ -224,12 +220,7 @@ public class Mimodek implements TrackingListener {
 		// Update cells
 		for (int i = 0; i < theCells.size(); i++)
 			theCells.get(i).update(app);
-/*
- * Updated twice?
-		for (int i = 0; i < growingCells.size(); i++) {
-			growingCells.get(i).update(app);
-		}
-*/
+
 		// Update food
 		for (int f = 0; f < foods.size(); f++) {
 			Food food = foods.get(f);
@@ -328,13 +319,7 @@ public class Mimodek implements TrackingListener {
 			for (int i = 0; i < bCells.size(); i++){
 				Renderer.render(renderBuffer, bCells.get(i));
 			}
-			/*
-			//render the stems (no custom shader)
-			renderBuffer.resetShader();
-			
-			for (int i = 0; i < bCells.size(); i++)
-				Renderer.renderWithoutShader( renderBuffer, bCells.get(i) );
-			*/
+
 		}
 		
 		renderBuffer.endDraw();
