@@ -1,6 +1,5 @@
 
 package mimodek2;
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -23,7 +22,7 @@ public class Mimodek implements TrackingListener {
 
 	//private boolean reset;
 
-	private boolean autoFood;
+	//private boolean autoFood;
 
 	private TUIOClient tuioClient;
 	
@@ -185,6 +184,8 @@ public class Mimodek implements TrackingListener {
 		//AGive access to the configurator from the JS console through a <b>Mimodek</b> object
 		jsConsole.runCommand("Mimodek = Java.type('mimodek2.Configurator')", true);
 		jsConsole.runCommand("IO = Java.type('mimodek2.serializer.LoaderSaver')", true);
+		jsConsole.runCommand("Mimodek.setSetting('AUTO_FOOD', true);", true);
+		
 		//jsConsole.bindToJs("Mimodek", Configurator.getInstance() );
 		//(new Thread(jsConsole)).start();
 	}
@@ -218,11 +219,8 @@ public class Mimodek implements TrackingListener {
 			return;
 		}
 		
-		if (true || autoFood /*&& app.frameCount % 3 == 0*/) {
-			/*
-			Food.dropFood(app.random(FacadeFactory.getFacade().width), app
-					.random(FacadeFactory.getFacade().height));
-			*/
+		if ( Configurator.getBooleanSetting("AUTO_FOOD") ) {
+			//randomly add food
 			genetics.addFood();
 		}
 
@@ -232,12 +230,13 @@ public class Mimodek implements TrackingListener {
 		// Update cells
 		for (int i = 0; i < theCells.size(); i++)
 			theCells.get(i).update(app);
-
+/*
+ * Updated twice?
 		for (int i = 0; i < growingCells.size(); i++) {
 			growingCells.get(i).update(app);
 		}
-
-		// Update/Draw food
+*/
+		// Update food
 		for (int f = 0; f < foods.size(); f++) {
 			Food food = foods.get(f);
 			food.z -= 0.0005 + Math.random() * 0.001;
@@ -248,7 +247,7 @@ public class Mimodek implements TrackingListener {
 			}
 		}
 
-		// Update/Draw creatures
+		// Update creatures
 		for (int c = 0; c < creatures.size(); c++) {
 			Creature cr = creatures.get(c);
 			cr.update();

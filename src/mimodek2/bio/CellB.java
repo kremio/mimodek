@@ -115,10 +115,17 @@ public class CellB extends Cell {
 			state.put("dropMeAtBY", dropMeAtB.y);
 		}
 		
+		if( !moving && eatable && anchor != null ){
+			state.remove("anchor");
+			state.put("dropX", anchor.pos.x);
+			state.put("dropY", anchor.pos.y);
+		}
+		
 		return state;
 	}
 	
 	public void setState(HashMap<String, Object> state){
+		
 		//Deal with vectors
 		if( state.containsKey("dropMeAtAX") && state.containsKey("dropMeAtAY") ){
 			this.dropMeAtA = new PVector(Float.class.cast( state.get("dropMeAtAX") ), Float.class.cast( state.get("dropMeAtAY") ));
@@ -131,9 +138,24 @@ public class CellB extends Cell {
 			state.remove("dropMeAtBY");
 		}
 		
+		//Dropped/dead leaf
+		PVector droppedAnchor = null;
+		if (state.containsKey("dropX") && state.containsKey("dropY")) {
+			droppedAnchor = new PVector(
+					Float.class.cast(state.get("dropX")),
+					Float.class.cast(state.get("dropY")));
+			state.remove("dropX");
+			state.remove("dropY");
+			state.remove("anchor");
+		}
+		
 		super.setState(state);
-	
-
+		
+		if(droppedAnchor != null){
+			setAnchor(new Cell( droppedAnchor ));
+		}
+		
+		
 		
 	}
 	
@@ -332,8 +354,10 @@ public class CellB extends Cell {
 		}else if(moving){
 			currentAngle = PApplet.atan2(creatureA.pos.y-anchor.pos.y,creatureA.pos.x-anchor.pos.x);
 		}
+		
 		pos.x = anchor.pos.x + PApplet.cos(currentAngle) * (radius()+minDistanceToA+distanceModifier*maxDistanceToA);
 		pos.y = anchor.pos.y + PApplet.sin(currentAngle) * (radius()+minDistanceToA+distanceModifier*maxDistanceToA);
+		
 		/*else if(){
 			pos.x = anchor.pos.x + PApplet.cos(currentAngle) * (radius()+minDistanceToA+distanceModifier*maxDistanceToA);
 			pos.y = anchor.pos.y + PApplet.sin(currentAngle) * (radius()+minDistanceToA+distanceModifier*maxDistanceToA);

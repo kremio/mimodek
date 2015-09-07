@@ -21,29 +21,36 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 */
 
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Set;
+
 import processing.core.PApplet;
 import mimodek2.*;
+import mimodek2.serializer.StatefulObject;
 
 // TODO: Auto-generated Javadoc
 /**
  * The Class LSystem.
  */
-public class LSystem {
-	
-	/** The command index. */
-	int commandIndex = 0;
-	
-	/** The command str. */
-	String commandStr = "ab";
+public class LSystem implements StatefulObject{
 	
 	/** The app. */
 	PApplet app;
 
-	/** The create eatable counter. */
-	int createEatableCounter = 0;
-
 	/** The time since last food. */
 	long timeSinceLastFood = 0;
+	
+	//STATE DATA
+	
+	/** The command index. */
+	public int commandIndex = 0;
+	
+	/** The command str. */
+	public String commandStr = "ab";
+
+	/** The create eatable counter. */
+	public int createEatableCounter = 0;
 
 	/**
 	 * Instantiates a new l system.
@@ -191,6 +198,32 @@ public class LSystem {
 				commandIndex++;
 				break;
 			}
+		}
+	}
+
+	public HashMap<String, Object> getState() {
+		HashMap<String, Object> state = new HashMap<String, Object>();
+		state.put("commandIndex", commandIndex);
+		state.put("commandStr", commandStr);
+		state.put("createEatableCounter", createEatableCounter);
+		return state;
+	}
+
+	public void setState(HashMap<String, Object> state) {
+		Class<?> thisClass = this.getClass();
+		Set<String> keys = state.keySet();
+		Field theField;
+		for(String key : keys){
+			try{
+				//If the field is found
+				theField = thisClass.getField( key );
+				
+				//set its value
+				theField.set(this, state.get(key) );
+			}catch(Exception e){
+				e.printStackTrace();
+				continue;
+			}	
 		}
 	}
 }

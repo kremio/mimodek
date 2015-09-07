@@ -48,9 +48,7 @@ public class LoaderSaver {
 			ois.close();
 			fis.close();
 			
-			System.out.println("Loaded "+loadedState.cells_A.size()+" A cells.");
-			System.out.println("Loaded "+loadedState.cells_B.size()+" B cells.");
-			System.out.println("Loaded "+loadedState.creatures.size()+" creature");
+			System.out.println("Loaded state:\n"+loadedState);
 			
 			HashMap<Long, Cell> cells = new HashMap<Long, Cell>( loadedState.cells_A.size() + loadedState.cells_B.size() + loadedState.creatures.size()  );
 			
@@ -65,6 +63,7 @@ public class LoaderSaver {
 				cells.put(cellA.id, cellA);
 				Cell.nextId = Math.max(cellA.id, Cell.nextId);
 				Mimodek.aCells.add(cellA);
+				Mimodek.theCells.add(cellA);
 			}
 			
 			CellB cellB;
@@ -74,6 +73,7 @@ public class LoaderSaver {
 				cells.put(cellB.id, cellB);
 				Cell.nextId = Math.max(cellB.id, Cell.nextId);
 				Mimodek.bCells.add(cellB);
+				Mimodek.theCells.add(cellB);
 			}
 			
 			Creature creature;
@@ -98,6 +98,14 @@ public class LoaderSaver {
 			for( HashMap<String, Object> creatureState : loadedState.creatures ){
 				cells.get( (Long)creatureState.get("id") ).link(cells, creatureState);
 			}
+			
+			//Register growing cells
+			for( long cellId : loadedState.growingCells){
+				Mimodek.growingCells.add( cells.get(cellId) );
+			}
+			
+			//Load genetics data
+			Mimodek.genetics.setState( loadedState.lSystem );
 			
 			
 		} catch (FileNotFoundException e) {
@@ -137,7 +145,9 @@ public class LoaderSaver {
 		}
 		
 		
-		State state = new State(Mimodek.aCells, Mimodek.bCells, Mimodek.creatures);
+		State state = new State(Mimodek.aCells, Mimodek.bCells, Mimodek.creatures, Mimodek.growingCells, Mimodek.genetics);
+		
+		System.out.println("Saved state:\n"+state);
 		
 		try {
 			FileOutputStream fos = new FileOutputStream(saveTo);
@@ -154,6 +164,7 @@ public class LoaderSaver {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		System.gc();
 		
 	}

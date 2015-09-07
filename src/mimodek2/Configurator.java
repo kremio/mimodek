@@ -26,7 +26,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -126,6 +125,7 @@ public class Configurator {
 		Configurator.setSetting("DEBUG_FLAG",true,"Toggle debug message.");
 		Configurator.setSetting("FAKE_DATA_FLAG",true,"Set to true to control the data value from the UI.");
 		Configurator.setSetting("AUTO_START_FLAG",true,"Set to true to start running Mimodek right after the program has loaded.");
+		Configurator.setSetting("AUTO_FOOD",false,"Set to true to feed Mimodek at each update loop.");
 		//Configurator.setSetting("FILMING_FLAG",false,"Set to true to save each frames to file.");
 		
 		/*

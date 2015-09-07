@@ -25,6 +25,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Set;
 
+import mimodek2.serializer.StatefulObject;
 import processing.core.PApplet;
 import processing.core.PShape;
 import processing.core.PVector;
@@ -32,7 +33,7 @@ import processing.core.PVector;
 /**
  * The Class Cell.
  */
-public class Cell{
+public class Cell implements StatefulObject{
 	 
 
 	public long id;
@@ -47,7 +48,7 @@ public class Cell{
  	public float currentMaturity = 0;
 	 
  	/** The anchor. */
- 	public Cell anchor = null;
+ 	public Cell anchor;
 	
 	/** The angle to anchor. */
 	public float angleToAnchor = 0;
@@ -138,6 +139,8 @@ public class Cell{
 				if( theField.getType().getSimpleName().equalsIgnoreCase("Cell") || ( theField.getType().getSuperclass() != null && theField.getType().getSuperclass().getSimpleName().equalsIgnoreCase("Cell") ) ){
 					//set its value
 					theField.set(this, cells.get( state.get(key) ) );
+				}else{
+					//System.out.println("Ignore: " +key+", a "+theField.getType().getSimpleName() );
 				}
 			}catch(Exception e){
 				System.out.println(e);
@@ -164,6 +167,7 @@ public class Cell{
 				theField = thisClass.getField( key );
 				
 				if( theField.getType().getSimpleName().equalsIgnoreCase("Cell") || ( theField.getType().getSuperclass() != null && theField.getType().getSuperclass().getSimpleName().equalsIgnoreCase("Cell") ) ){
+					//System.out.println("Ignore: " +key+", a "+theField.getType().getSimpleName() );
 					//This field requires linking object, skip for now
 					continue;
 				}

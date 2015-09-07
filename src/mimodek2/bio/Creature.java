@@ -51,7 +51,7 @@ public class Creature extends Cell {
 	public int workCounter = 0;
 	
 	/** The cell b. */
-	public CellB cellB = null;
+	public CellB cellB;
 
 	/** The high lander. */
 	public boolean highLander = false;

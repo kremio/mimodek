@@ -1,15 +1,19 @@
-Critical:
+||| Critical:
 
 - Figure out why the animation is staggered
 
 - Do deployment on another machine
+Requires Java 1.8
+Need to figure out exactly out to setup JOGL libraries on Linux
 
-- Create GIT repo
+* Create GIT repo
 
-* Z sorting:
-The leafs are above the A cells but the stems are under.
+- Z sorting:
+The dropped leaf should be under everything else
+*The leafs are above the A cells but the stems are under.
 
-- Test video tracker
+
+* Test video tracker
 
 - Fix colors / alpha value
 
@@ -17,8 +21,18 @@ The leafs are above the A cells but the stems are under.
  * colors and dilatation
  fetch from net
 
-Good to have:
-- Saving/loading state
+||| Good to have:
+* Saving/loading state
 
 * Settings control with JS console
+
+Third party JARs:
+TUIO.jar
+core.jar
+gluegen-rt-natives-macosx-universal.jar
+gluegen-rt.jar
+jogl-all-natives-macosx-universal.jar
+jogl-all.jar
+libTUIO.jar
+
 
