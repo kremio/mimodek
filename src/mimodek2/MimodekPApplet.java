@@ -2,7 +2,6 @@ package mimodek2;
 
 import mimodek2.bio.Food;
 import mimodek2.facade.FacadeFactory;
-import mimodek2.graphics.Background;
 import mimodek2.graphics.Navigation;
 import processing.core.*;
 
@@ -85,10 +84,6 @@ public class MimodekPApplet extends PApplet{
 		}
 		
 		Food.dropFood(FacadeFactory.getFacade().mouseX/Configurator.getFloatSetting("GLOBAL_SCALING") + (-1f + (float) Math.random() * 2),FacadeFactory.getFacade().mouseY/Configurator.getFloatSetting("GLOBAL_SCALING") + (-1f + (float) Math.random() * 2));
-	}
-	
-	public void mouseClicked(){
-		Background.addToBackground( mimodek.cellsAPass );
 	}
 
 

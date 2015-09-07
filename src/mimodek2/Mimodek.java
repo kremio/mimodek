@@ -144,10 +144,6 @@ public class Mimodek implements TrackingListener {
 		CellB.createShape( app.g, app.loadImage("textures/softcell.png"));
 		
 		// create and register data interpolators
-		/*
-		CellA.temperatureInterpolator = new TemperatureDataInterpolator(
-				dataHandler);
-		*/
 		CellA.humidityInterpolator = new DataInterpolator("DATA_HUMIDITY",
 				dataHandler);
 		CellA.temperatureInterpolator = new TemperatureDataInterpolator(
@@ -173,8 +169,6 @@ public class Mimodek implements TrackingListener {
 		
 		//Init the renderer
 		Renderer.setup(app);
-		Lighting.setup(app, 256);
-		Background.setup(app, app.color(0,0,0,0));
 		
 		//Init navigation
 		Navigation.setup();
@@ -345,25 +339,10 @@ public class Mimodek implements TrackingListener {
 		
 		renderBuffer.endDraw();
 		
-		app.resetShader();
-		//app.image(Background.get(), 0, 0);
-		
-		
+		app.resetShader();	
 		
 		app.image(foodPass, 0, 0);
 		app.image(cellsAPass, 0, 0);
-		
-		/*
-		//Shadow casting lights from creatures
-		// Could be modulated by the distance of the creature to the organism
-		for (int i=0; i < creatures.size(); i++ ){
-			if(!creatures.get(i).hasFood)
-				continue;
-			Lighting.render(app, renderBuffer, creatures.get(i).pos);
-		}
-		
-		app.resetShader();
-		*/
 		
 		app.image(renderBuffer, 0, 0);
 		
@@ -372,7 +351,7 @@ public class Mimodek implements TrackingListener {
 		app.shader( Renderer.getCreatureShader() );
 		for (int i=0; i < creatures.size(); i++ )
 			Renderer.render(app.g, creatures.get(i) );
-		//app.image( Lighting.computeShadowMap( renderBuffer ), 0, app.height/2);
+
 	}
 	
 	public void callAfterRender() {
