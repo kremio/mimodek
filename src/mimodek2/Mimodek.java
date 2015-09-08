@@ -175,8 +175,9 @@ public class Mimodek implements TrackingListener {
 		jsConsole.runCommand("Mimodek = Java.type('mimodek2.Configurator')", true);
 		jsConsole.runCommand("IO = Java.type('mimodek2.serializer.LoaderSaver')", true);
 		jsConsole.runCommand("Mimodek.setSetting('AUTO_FOOD', true);", true);
+		//jsConsole.runCommand("myColor = ', true);", true);
 		
-		//jsConsole.bindToJs("Mimodek", Configurator.getInstance() );
+		
 		//(new Thread(jsConsole)).start();
 	}
 	

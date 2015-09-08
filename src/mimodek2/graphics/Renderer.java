@@ -102,12 +102,14 @@ public class Renderer {
 		cellShader.set("mask", cellA_MaskTexture);
 		cellShader.set("noDeform", false);
 		cellShader.set("theTexture", CellA.texture);
+		cellShader.set("alpha", 1f);
 	}
 	
 	public static void setUniforms(CellB cellB){
 		cellShader.set("mask", cellB_MaskTexture);
 		cellShader.set("noDeform", true);
 		cellShader.set("theTexture", CellB.texture);
+		cellShader.set("alpha", 1f);
 	}
 	
 	public static void setTime(float t){
@@ -127,11 +129,10 @@ public class Renderer {
 		
 		//Set the tint color
 		int c = mimodek2.data.TemperatureColorRanges.getColor(CellA.temperatureInterpolator.getInterpolatedValue(PApplet.lerp(1f,0f,(float)cellA.level/(float)CellA.maxLevel)));		
-		renderBuffer.ambientLight(renderBuffer.red(c), renderBuffer.green(c), renderBuffer.blue(c));
-		renderBuffer.ambientLight(0.5f, 1f, 0.5f);
-		//app.ambientLight(1f,0f,0f);
-		//app.ambientLight(255, 255,255);
-		//c.mult(brightness);
+		renderBuffer.ambientLight(c >> 16 & 0xFF, c >> 8 & 0xFF, c & 0xFF);
+
+		//Alpha channel
+		cellShader.set("alpha", Configurator.getFloatSetting("CELLA_ALPHA"));
 		
 		//Place and rotate the cell
 		renderBuffer.pushMatrix();
@@ -219,10 +220,10 @@ public class Renderer {
 			c = cell.color;	
 		}
 		
-		//renderBuffer.ambientLight(0.5f, 0.5f, 1f);
 		//Set the tint color
-		renderBuffer.ambientLight(renderBuffer.red(c) * cell.currentBrightness, renderBuffer.green(c) * cell.currentBrightness, renderBuffer.blue(c) * cell.currentBrightness);
-		
+		renderBuffer.ambientLight(c >> 16 & 0xFF , c >> 8 & 0xFF , c & 0xFF );
+		//Alpha channel
+		cellShader.set("alpha", cell.currentBrightness);
 		
 		//Draw the leaf
 		renderBuffer.pushMatrix();

@@ -1,5 +1,7 @@
 ||| Critical:
 
+- Smooth color interpolation
+
 - Figure out why the animation is staggered
 
 - Do deployment on another machine
