@@ -140,9 +140,9 @@ public class Renderer {
 		if ( anchor != null ) {
 			renderBuffer.translate(anchor.pos.x + cellA.currentMaturity * (cellA.pos.x - anchor.pos.x), 
 					anchor.pos.y + cellA.currentMaturity * (cellA.pos.y - anchor.pos.y),
-					cellA.zLevel);
+					cellA.level);
 		} else {
-			renderBuffer.translate(cellA.pos.x, cellA.pos.y, cellA.zLevel);
+			renderBuffer.translate(cellA.pos.x, cellA.pos.y, cellA.level);
 		}
 
 		renderBuffer.rotate( cellA.aa, 0.0f,0.0f,1.0f);

@@ -62,6 +62,10 @@ public class Mimodek implements TrackingListener {
 
 	private static Object[] callArgumentsAfterRender;
 	
+	/* For sorting leaves at render time */
+	private ArrayList<CellB> deadLeaves = new ArrayList<CellB>();
+	private ArrayList<CellB> carriedLeaves = new ArrayList<CellB>();
+	
 	public static void reset(){
 		scentMap = new QTree(0, 0, FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, 1);
 		genetics = new LSystem("ab", app);
@@ -260,84 +264,109 @@ public class Mimodek implements TrackingListener {
 		renderBuffer.background(0,0); //clear previous frame
 		Navigation.applyTransform(renderBuffer); //set global transform
 		
+		/*
+		 * Layout (from bottom to top):
+		 * - food
+		 * - dead leafs
+		 * - leafs
+		 * - cells
+		 * - carried leaf
+		 * - creatures
+		 */
 		
-		//Render the food
-		if( foods.size() > 0 ){
-			renderBuffer.shader( Renderer.getFoodShader(), PApplet.POINTS );
-			for(int i= 0; i < foods.size(); i++)
-				Renderer.render( renderBuffer, foods.get(i) );
-		}
 		
-		CellB cellB;
-		//Render the stems
+		/* Render the stems */
 		if( bCells.size() > 0 ){
-			
-			for (int i = 0; i < bCells.size(); i++){
-				cellB = bCells.get(i);
-				if( cellB.creatureA != null && cellB.creatureB != null )
+			for (CellB cellB : bCells){
+				if( cellB.moving || cellB.eatable){ //sort the leaves
+					if( cellB.moving ){
+						carriedLeaves.add( cellB );
+					}else{
+						deadLeaves.add( cellB );
+					}
 					continue; //only render the stems under the A Cells if the leaf is not being carried
-				
-				Renderer.renderWithoutShader( renderBuffer, bCells.get(i) );
-
+				}
+				Renderer.renderWithoutShader( renderBuffer, cellB );
 			}
 		}
-		renderBuffer.endDraw();
 		
-		PImage foodPass = renderBuffer.get();
-		
-		//Render the cells
-		renderBuffer.beginDraw();
-		Navigation.applyTransform(renderBuffer);
+		/* Render the cells */
 		renderBuffer.shader( Renderer.getCellShader() );
 		
 		if (aCells.size() > 0) {
 			
 			Renderer.setUniforms(aCells.get(0));
-			for (int i = 0; i < aCells.size(); i++){
-				Renderer.setTime( (app.millis()+i*10f)/1000f * 0.5f );
-				Renderer.render(renderBuffer, aCells.get(i));
+			for (CellA cellA: aCells){
+				Renderer.setTime( (app.millis()+cellA.id*10f)/1000f * 0.5f );
+				Renderer.render(renderBuffer, cellA);
 			}
 		}
-		renderBuffer.endDraw();
-		
-		cellsAPass = renderBuffer.get(); 
-		
-		renderBuffer.beginDraw();
-		Navigation.applyTransform(renderBuffer);
-		renderBuffer.background(0,0);
 		
 		if (bCells.size() > 0){
+			
+			Renderer.setUniforms(bCells.get(0));
+			for (CellB cellB : bCells){
+				if( cellB.moving || cellB.eatable )
+					continue;
+				Renderer.render(renderBuffer, cellB);
+			}
+		}
+		
+		/* Render the leafs being carried */
+		if (carriedLeaves.size() > 0){
 			//render stems of carried leafs
-			for (int i = 0; i < bCells.size(); i++){
-				cellB = bCells.get(i);
+			for (CellB cellB : carriedLeaves){
 				if( cellB.creatureA != null && cellB.creatureB != null )
-					Renderer.renderWithoutShader( renderBuffer, bCells.get(i) );//only render the stems above the A Cells if the leaf is not being carried
+					Renderer.renderWithoutShader( renderBuffer, cellB );//only render the stems above the A Cells if the leaf is not being carried
 			}
 			
 			//render leafs
 			renderBuffer.shader( Renderer.getCellShader() );
-			Renderer.setUniforms(bCells.get(0));
-			for (int i = 0; i < bCells.size(); i++){
-				Renderer.render(renderBuffer, bCells.get(i));
+			for (CellB cellB : carriedLeaves){
+				Renderer.render(renderBuffer, cellB);
 			}
 
 		}
 		
 		renderBuffer.endDraw();
 		
-		app.resetShader();	
+		app.resetShader();
+		app.pushMatrix();
+		Navigation.applyTransform(app.g);
 		
-		app.image(foodPass, 0, 0);
-		app.image(cellsAPass, 0, 0);
+		//Render the dead leaves
+		if(deadLeaves.size() > 0){
+			app.shader( Renderer.getCellShader() );
+			Renderer.setUniforms(deadLeaves.get(0));
+			for(CellB cellB : deadLeaves)
+				Renderer.render(app.g, cellB);
+		}
 		
+		//Render the food
+		if (foods.size() > 0) {
+			app.shader(Renderer.getFoodShader(), PApplet.POINTS);
+			for (int i = 0; i < foods.size(); i++)
+				Renderer.render(app.g, foods.get(i));
+		}
+		
+		app.popMatrix();
+		
+		//Render the living cells
+		app.resetShader();
 		app.image(renderBuffer, 0, 0);
 		
 		//Render the creatures on top of everything
 		Navigation.applyTransform(app.g);
 		app.shader( Renderer.getCreatureShader() );
-		for (int i=0; i < creatures.size(); i++ )
-			Renderer.render(app.g, creatures.get(i) );
-
+		for (Creature creature : creatures)
+			Renderer.render(app.g, creature );
+		
+		//De-reference
+		deadLeaves.clear();
+		carriedLeaves.clear();
+		
+		//Run callback, if any
+		callAfterRender();
 	}
 	
 	public void callAfterRender() {

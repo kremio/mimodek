@@ -24,7 +24,7 @@ public class MimodekPApplet extends PApplet{
 		// Writing to the depth buffer is disabled to avoid rendering
 		// artifacts due to the fact that the particles are semi-transparent
 		// but not z-sorted.
-		hint(DISABLE_DEPTH_MASK);
+		//hint(DISABLE_DEPTH_MASK);
 		
 		mimodek = new Mimodek((PApplet)this, FacadeFactory.FULL_WINDOW);
 		
