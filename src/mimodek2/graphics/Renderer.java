@@ -102,14 +102,14 @@ public class Renderer {
 		cellShader.set("mask", cellA_MaskTexture);
 		cellShader.set("noDeform", false);
 		cellShader.set("theTexture", CellA.texture);
-		cellShader.set("alpha", 1f);
+		//cellShader.set("alpha", 1f);
 	}
 	
 	public static void setUniforms(CellB cellB){
 		cellShader.set("mask", cellB_MaskTexture);
 		cellShader.set("noDeform", true);
 		cellShader.set("theTexture", CellB.texture);
-		cellShader.set("alpha", 1f);
+		//cellShader.set("alpha", 1f);
 	}
 	
 	public static void setTime(float t){
@@ -122,17 +122,18 @@ public class Renderer {
 		render(renderBuffer, cellA);
 	}
 	
+	public static void setShaderColorUniform(PShader shader, String uniformName, int rgb255, float alpha){
+		shader.set(uniformName, (rgb255 >> 16 & 0xFF)/255f, (rgb255 >> 8 & 0xFF)/255f, (rgb255 & 0xFF)/255f, alpha );
+	}
+	
 	public static void render(PGraphics renderBuffer, CellA cellA){
 		renderBuffer.pushStyle();
 		
 		renderBuffer.noLights();
 		
 		//Set the tint color
-		int c = mimodek2.data.TemperatureColorRanges.getColor(CellA.temperatureInterpolator.getInterpolatedValue(PApplet.lerp(1f,0f,(float)cellA.level/(float)CellA.maxLevel)));		
-		renderBuffer.ambientLight(c >> 16 & 0xFF, c >> 8 & 0xFF, c & 0xFF);
-
-		//Alpha channel
-		cellShader.set("alpha", Configurator.getFloatSetting("CELLA_ALPHA"));
+		int c = mimodek2.data.TemperatureColorRanges.getColor( CellA.temperatureInterpolator.getInterpolatedValue( PApplet.lerp(1f,0f,(float)cellA.level/(float)CellA.maxLevel) ) );
+		setShaderColorUniform(cellShader, "cellColor", c, Configurator.getFloatSetting("CELLA_ALPHA") );
 		
 		//Place and rotate the cell
 		renderBuffer.pushMatrix();
@@ -160,10 +161,9 @@ public class Renderer {
 		Cell anchor = cell.anchor;
 		
 		renderBuffer.pushStyle();
+		
 		//Draw the stem	
 		if (cell.currentMaturity > 0.4f) {
-			// OpenGL.pointSize(1f);
-			// OpenGL.disableTexture(1);
 			renderBuffer.strokeWeight(1.0f);
 			renderBuffer.stroke(1.0f);
 			renderBuffer.noFill();
@@ -221,9 +221,7 @@ public class Renderer {
 		}
 		
 		//Set the tint color
-		renderBuffer.ambientLight(c >> 16 & 0xFF , c >> 8 & 0xFF , c & 0xFF );
-		//Alpha channel
-		cellShader.set("alpha", cell.currentBrightness);
+		setShaderColorUniform(cellShader, "cellColor", c, cell.currentBrightness );
 		
 		//Draw the leaf
 		renderBuffer.pushMatrix();

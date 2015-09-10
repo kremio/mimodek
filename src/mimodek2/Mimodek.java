@@ -179,6 +179,8 @@ public class Mimodek implements TrackingListener {
 		jsConsole.runCommand("Mimodek = Java.type('mimodek2.Configurator')", true);
 		jsConsole.runCommand("IO = Java.type('mimodek2.serializer.LoaderSaver')", true);
 		jsConsole.runCommand("Mimodek.setSetting('AUTO_FOOD', true);", true);
+		jsConsole.runCommand("CellA = Java.type('mimodek2.bio.CellA');", true);
+		jsConsole.runCommand("TemperatureColorRanges = Java.type('mimodek2.data.TemperatureColorRanges');", true);
 		//jsConsole.runCommand("myColor = ', true);", true);
 		
 		
@@ -286,6 +288,7 @@ public class Mimodek implements TrackingListener {
 					}
 					continue; //only render the stems under the A Cells if the leaf is not being carried
 				}
+				
 				Renderer.renderWithoutShader( renderBuffer, cellB );
 			}
 		}
@@ -315,6 +318,8 @@ public class Mimodek implements TrackingListener {
 		/* Render the leafs being carried */
 		if (carriedLeaves.size() > 0){
 			//render stems of carried leafs
+			renderBuffer.resetShader();
+			renderBuffer.noLights();
 			for (CellB cellB : carriedLeaves){
 				if( cellB.creatureA != null && cellB.creatureB != null )
 					Renderer.renderWithoutShader( renderBuffer, cellB );//only render the stems above the A Cells if the leaf is not being carried

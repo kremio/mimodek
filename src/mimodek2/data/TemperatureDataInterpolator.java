@@ -21,8 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 */
 
-import mimodek2.*;
-
 // TODO: Auto-generated Javadoc
 /**
  * The Class TemperatureDataInterpolator.
@@ -45,13 +43,14 @@ public class TemperatureDataInterpolator extends DataInterpolator {
 	 */
 	public TemperatureDataInterpolator(DataHandler dataHandler) {
 		super("DATA_TEMPERATURE", dataHandler);
-		realNextValue = nextValue;
-		realLastValue = lastValue;
+		//realNextValue = nextValue;
+		//realLastValue = lastValue;
 	}
 	
 	/* (non-Javadoc)
 	 * @see MimodekV2.data.DataInterpolator#update()
 	 */
+/*
 	@Override
 	public void update(){
 		lastUpdate = System.currentTimeMillis();
@@ -64,6 +63,9 @@ public class TemperatureDataInterpolator extends DataInterpolator {
 			nextValue = realNextValue;
 		}
 		realData = !realData;
+		
 	}
+	*/
+
 
 }

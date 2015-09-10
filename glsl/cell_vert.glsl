@@ -1,4 +1,4 @@
-#define PROCESSING_TEXLIGHT_SHADER
+#define PROCESSING_TEXTURE_SHADER
 
 //Uniforms specific to this shader
 uniform float time; //Used to animate the vertex displacement
@@ -14,8 +14,10 @@ attribute vec3 normal;
 attribute vec4 vertex;
 attribute vec4 color;
 
+/*
 attribute vec4 ambient;
 uniform vec3 lightAmbient[8];
+*/
 
 varying vec4 vertColor;
 varying vec4 vertTexCoord;
@@ -118,7 +120,7 @@ void main() {
 
 
   //Pass the tint colour (from the first ambient light source) 
-  vertColor = vec4(lightAmbient[0],1.0);
+  vertColor = color; //vec4(lightAmbient[0],1.0);
 
   //Rescales the texture coordinates
   vertTexCoord = texMatrix * vec4(texCoord.st, 1.0, 1.0);

@@ -38,13 +38,13 @@ public class TemperatureColorRanges {
 	private int[] colourRanges;
 	
 	/** The Constant minT. */
-	public static final float minT = -69;
+	public static final float minT = -69f;
 	
 	/** The Constant maxT. */
-	public static final float maxT = 58;
+	public static final float maxT = 58f;
 	
 	/** The Constant temperatureRanges. */
-	public static final float[] temperatureRanges = new float[]{-19f,0f,11f,23f,33f,41f,maxT};
+	public static final float[] temperatureRanges = new float[]{minT,-19f,0f,11f,23f,33f,41f,maxT};
 
 	/** Definition of default color ranges */
 	private static final String[] DEFAULT_RANGES = new String[]{
@@ -55,7 +55,7 @@ public class TemperatureColorRanges {
 						"0.20915031,1.0,1.0,0.14509805,1.0,1.0",
 						"0.1267974,1.0,1.0,0.052941173,1.0,1.0",
 						"0.043790847,1.0,1.0,0.0078125,1.0,0.7529412"
-						};;
+						};
 	
 	/** The instance. */
 	public static TemperatureColorRanges instance;
@@ -90,9 +90,7 @@ public class TemperatureColorRanges {
 	 * @return the temperature color
 	 */
 	public static int getTemperatureColor(float t){
-		if(instance ==null)
-			return 0;
-		return instance.getColorForTemperature(t);
+		return getColor(t);
 	}
 	
 	/**
@@ -235,7 +233,17 @@ public class TemperatureColorRanges {
 	 * @return the temperature for higher range
 	 */
 	protected float getTemperatureForHigherRange(float temp) {
-		int range = 0;
+		
+		int range = getRangeForTemperature( temp );
+		if(range + 1 == temperatureRanges.length){
+			return maxT;
+		}
+		
+		//Normalize the temperature in its range
+		float tempDist = (temp - temperatureRanges[range]) / ( temperatureRanges[range + 1] - temperatureRanges[range] );
+		
+		return temperatureRanges[range + 1] + (tempDist * ( (range + 2 < temperatureRanges.length ? temperatureRanges[range + 2] : maxT) - temperatureRanges[range + 1] ) );
+		/*
 		while(range<temperatureRanges.length && temperatureRanges[range]<=temp)
 			range++;
 		if(range==temperatureRanges.length) //over maximum
@@ -246,8 +254,21 @@ public class TemperatureColorRanges {
 			step = 1.0f;
 		
 		 return PApplet.lerp(temperatureRanges[range], (range+1)<temperatureRanges.length?temperatureRanges[range]:maxT, step);
+		 */
 	}
 	
+	
+	private int getRangeForTemperature(float temp){
+		// Keep input temperature in bound
+		temp = PApplet.max(temp, minT);
+		temp = PApplet.min(temp, maxT);
+		// Find the color range for the given temperature
+		int range = 0;
+		while (range + 1 < temperatureRanges.length && temp >= temperatureRanges[range + 1])
+			range++;
+		
+		return range;
+	}
 	
 	/**
 	 * Gets the color for temperature.
@@ -256,18 +277,30 @@ public class TemperatureColorRanges {
 	 * @return the color for temperature
 	 */
 	protected int getColorForTemperature(float temp) {
-		int range = 0;
-		while(range<temperatureRanges.length && temperatureRanges[range]<=temp)
-			range++;
 		
-		if(range==temperatureRanges.length) //over maximum
+		/*
+		 minT < 0 < 10 < 20 < 30 < maxT
+		  0		1    2    3   4    5
+		 */
+		
+		if(temp <= minT)
+			return colourRanges[0];
+		
+		
+		
+		if(temp >= maxT)
 			return colourRanges[colourRanges.length-1];
+		
+		int range = getRangeForTemperature( temp );
+		
 
-		float step = PApplet.map(temp, range>0?temperatureRanges[range-1]:minT, temperatureRanges[range]-1, 0.0f, 1.0f);
+		float step = PApplet.map(temp, temperatureRanges[range], temperatureRanges[range+1], 0.0f, 1.0f);
+		/* That should never happen...
 		if(step>1.0)
 			step = 1.0f;
+			*/
 	
-		 return app.lerpColor(colourRanges[range*2], colourRanges[range*2+1], step);
+		 return app.lerpColor(colourRanges[range*2], colourRanges[range*2 + 1], step);
 	}
 	
 	/**

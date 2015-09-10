@@ -31,16 +31,16 @@ import processing.core.PApplet;
 public class DataInterpolator {
 	
 	/** The last update. */
-	public long lastUpdate;
+	public volatile long lastUpdate;
 	
 	/** The last value. */
-	public float lastValue;
+	public volatile float lastValue;
 	
 	/** The next value. */
-	public float nextValue;
+	public volatile float nextValue;
 	
 	/** The data name. */
-	public String dataName;
+	public final String dataName;
 	
 	/**
 	 * Instantiates a new data interpolator.
@@ -59,7 +59,7 @@ public class DataInterpolator {
 	/**
 	 * Update.
 	 */
-	public void update(){
+	public synchronized void update(){
 		lastUpdate = System.currentTimeMillis();
 		lastValue = nextValue;
 		nextValue = Configurator.getFloatSetting(dataName);
@@ -71,6 +71,9 @@ public class DataInterpolator {
 	 * @return the interpolated value
 	 */
 	public float getInterpolatedValue(){
+		if(lastValue == nextValue)
+			return lastValue;
+		
 		float completeRefreshTime = Configurator.getFloatSetting("DATA_REFRESH_RATE") * 60f * 1000f;
 		float elapsed = System.currentTimeMillis() - lastUpdate;
 		//that's the longest time for interpolation
