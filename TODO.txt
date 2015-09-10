@@ -1,8 +1,8 @@
 ||| Critical:
 
-- Smooth color interpolation
+* Smooth color interpolation
 
-- Figure out why the animation is staggered
+* Figure out why the animation is staggered
 
 - Do deployment on another machine
 Requires Java 1.8
@@ -10,24 +10,26 @@ Need to figure out exactly out to setup JOGL libraries on Linux
 
 * Create GIT repo
 
-- Z sorting:
-The dropped leaf should be under everything else
-*The leafs are above the A cells but the stems are under.
+* Z sorting:
+ * The dropped leaf should be under everything else
+ * The leafs are above the A cells but the stems are under.
 
 
 * Test video tracker
 
-- Fix colors / alpha value
+* Fix colors / alpha value
 
-- Test data input:
+* Test data input:
  * colors and dilatation
- fetch from net
+ * fetch from net
 
 ||| Good to have:
 * Saving/loading state
 
 * Settings control with JS console
-
+- Saving console commands history
+- Loading console setup script from file
+ 
 Third party JARs:
 TUIO.jar
 core.jar
@@ -36,5 +38,8 @@ gluegen-rt.jar
 jogl-all-natives-macosx-universal.jar
 jogl-all.jar
 libTUIO.jar
+
+WU API key:
+0a37afab349f03e3
 
 

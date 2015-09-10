@@ -10,6 +10,7 @@ public class Navigation {
 	public static PVector zoom;
 	private static float speedFactor = 0.1f;
 	private static float maxSpeed = 1f;
+	private static float maxZoom = 10f;
 	
 	
 	public static void setup(){
@@ -38,6 +39,9 @@ public class Navigation {
 		}else{
 			zoom.z /= 1 + speed * speedFactor * maxSpeed;
 		}
+		
+		zoom.z = PApplet.min(zoom.z, maxZoom);
+		
 	}
 	
 	

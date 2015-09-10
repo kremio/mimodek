@@ -41,7 +41,7 @@
 <setting name="DATA_TEMPERATURE" description="The current temperature. This is set at runtime, but you can specify a default value.">27.519997</setting>
 <setting name="DEBUG_FLAG" description="Toggle debug message.">true</setting>
 <setting name="FACADE_TYPE_INT" description="Set which type of display to use. (PRADO_FACADE)1: Medialab Prado facade, (FULL_WINDOW)2: The size of the Processing sketch, (MINIPAL)3: Half the size of the PAL format">2</setting>
-<setting name="FAKE_DATA_FLAG" description="Set to true to control the data value from the UI.">false</setting>
+<setting name="FAKE_DATA_FLAG" description="Set to true to control the data value from the UI.">true</setting>
 <setting name="FOOD_B" description="Range between 0f and 1f. The blue component of the food color.">1.0</setting>
 <setting name="FOOD_G" description="Range between 0f and 1f. The green component of the food color.">1.0</setting>
 <setting name="FOOD_R" description="Range between 0f and 1f. The red component of the food color.">1.0</setting>
@@ -51,8 +51,8 @@
 <setting name="GLOBAL_SCALING" description="Useful to magnify/shrink the image, leave to 1 when Mimodek is on display or when fiming in PAL">1.0</setting>
 <setting name="GL_TEXTURE_MIN_FILTER_INT" description="Define the texture filtering. Might or might not do anything depending on the hardware">4</setting>
 <setting name="HIGH_RESOLUTION_SCALE" description="Define the scaling factor for quick screenshot rendering and filming.">1.0</setting>
-<setting name="LOCATION_CITY_STR" description="City where Mimodek is running.">Zagreb</setting>
-<setting name="LOCATION_COUNTRY_STR" description="Country where Mimodek is running.">hr</setting>
+<setting name="LOCATION_CITY_STR" description="City where Mimodek is running.">Maribor</setting>
+<setting name="LOCATION_COUNTRY_STR" description="Country where Mimodek is running.">Slovenia</setting>
 <setting name="MESSAGE_BOARD_DURATION" description="How long should the board be shown. In minutes.">0.25</setting>
 <setting name="MESSAGE_BOARD_FADE_SPEED" description="Range between 0f and 1f. How fast the board fades in / out.">0.01</setting>
 <setting name="MESSAGE_BOARD_FREQUENCY" description="How often should the board be shown in minutes. O disables message board.">0.0</setting>
@@ -64,4 +64,5 @@ _STR" description="The name of the image to use as a board">facade text</setting
 <setting name="UPLOAD_FORMAT_STR" description="Extension of the image format used for automatic posting. WARNING: Because Mimodek is currently using Exif metadata, only jpg is allowed, any other value is untested and will most certainly cause problems.">jpg</setting>
 <setting name="UPLOAD_RATE" description="Frequency of screen shot post in minutes.">1.0</setting>
 <setting name="WORDPRESS_URL_STR" description="URL of the blog.">http://mimodek.medialab-prado.es/</setting>
+<setting name="WU_API_KEY_STR" description="Key for the Weather Underground API">0a37afab349f03e3</setting>
 </mimodeksettings>

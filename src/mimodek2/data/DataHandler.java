@@ -71,11 +71,13 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 	 */
 	public static boolean testDataSource(PApplet app , MimodekLocation location) throws Exception{
 
-		if(Configurator.getBooleanSetting("FAKE_DATA_FLAG"))
+		if(Configurator.getBooleanSetting("FAKE_DATA_FLAG")){
+			System.out.println("Fake data!");
 			return true;
+		}
 		
 		WeatherUndergroundClient wunderground = new WeatherUndergroundClient(app);
-		if(wunderground.findStation(location)){
+		if(wunderground.checkForStation(location)){
 			Verbose.debug("A weather station for the location has been found.");
 			HashMap<String,String> testMap = new HashMap<String, String>();
 			testMap.put("temp_c", "DATA_TEMPERATURE");
@@ -122,7 +124,7 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 
 			// Weather underground
 			wunderground = new WeatherUndergroundClient(app);
-			wunderground.findStation(location);
+			//wunderground.findStation(location);
 			/*
 			// Wordpress plugin
 			this.xmlReceiver = new XMLReceiver(app,

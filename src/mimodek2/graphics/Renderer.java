@@ -102,14 +102,12 @@ public class Renderer {
 		cellShader.set("mask", cellA_MaskTexture);
 		cellShader.set("noDeform", false);
 		cellShader.set("theTexture", CellA.texture);
-		//cellShader.set("alpha", 1f);
 	}
 	
 	public static void setUniforms(CellB cellB){
 		cellShader.set("mask", cellB_MaskTexture);
 		cellShader.set("noDeform", true);
 		cellShader.set("theTexture", CellB.texture);
-		//cellShader.set("alpha", 1f);
 	}
 	
 	public static void setTime(float t){
@@ -225,8 +223,8 @@ public class Renderer {
 		
 		//Draw the leaf
 		renderBuffer.pushMatrix();
-		float tX = anchor.pos.x + cell.currentMaturity * (cell.pos.x - anchor.pos.x) * 1.5f;
-		float tY = anchor.pos.y + cell.currentMaturity * (cell.pos.y - anchor.pos.y) * 1.5f;
+		float tX = anchor.pos.x + cell.currentMaturity * (cell.pos.x - anchor.pos.x) /* 1.5f*/;
+		float tY = anchor.pos.y + cell.currentMaturity * (cell.pos.y - anchor.pos.y) /* 1.5f*/;
 
 		renderBuffer.translate(tX,tY,cell.zLevel);
 		renderBuffer.rotate( PConstants.HALF_PI+cell.currentAngle,0.0f,0.0f,1.0f);

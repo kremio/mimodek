@@ -58,8 +58,8 @@ public class Mimodek implements TrackingListener {
 	
 	public static boolean pause = false;
 
+	/* Post render hook callback */
 	private static Method callAfterRender;
-
 	private static Object[] callArgumentsAfterRender;
 	
 	/* For sorting leaves at render time */
@@ -99,7 +99,7 @@ public class Mimodek implements TrackingListener {
 		
 		// load color range
 		try{
-			TemperatureColorRanges.createTemperatureColorRanges(app,/*PAppletsettingsFolder.getAbsolutePath()+File.separatorChar+*/"settings/MimodekColourRanges.txt");
+			TemperatureColorRanges.createTemperatureColorRanges(app,"settings/MimodekColourRanges.txt");
 		}catch(Exception e){
 			Verbose.overRule(e.getMessage());
 		}
@@ -127,19 +127,21 @@ public class Mimodek implements TrackingListener {
 		Verbose.overRule("Hello " + location + "!");
 
 		try{
-			//DataHandler.testDataSource(app, location);	
+			DataHandler.testDataSource(app, location);	
 			// data update thread
 			dataHandler = DataHandler.getInstance(location, app);
 		}catch(Exception e){
+			e.printStackTrace();
 			//Verbose.debug("No weather station has been found for "+location+". Try the closest biggest city perhaps? \nMimodek will stop.");
-			app.exit(); // no weather station so Mimodek can't run, too bad....
+			System.exit(0);
+			//app.exit(); // no weather station so Mimodek can't run, too bad....
 		}
+		/* Setup data to configuration mapping */
 		// in the future, more variables could be mapped
 		dataHandler.map("temp_c", "DATA_TEMPERATURE");
 		dataHandler.map("relative_humidity", "DATA_HUMIDITY");
 		
 		// Create geometries
-		
 		CellA.createShape( app.g, app.loadImage("textures/hardcell.png"));
 		CellB.createShape( app.g, app.loadImage("textures/softcell.png"));
 		

@@ -123,7 +123,7 @@ public class Configurator {
 		 * Debug/filming settings
 		 */
 		Configurator.setSetting("DEBUG_FLAG",true,"Toggle debug message.");
-		Configurator.setSetting("FAKE_DATA_FLAG",true,"Set to true to control the data value from the UI.");
+		Configurator.setSetting("FAKE_DATA_FLAG",false,"Set to true to control the data value from the UI.");
 		Configurator.setSetting("AUTO_START_FLAG",true,"Set to true to start running Mimodek right after the program has loaded.");
 		Configurator.setSetting("AUTO_FOOD",false,"Set to true to feed Mimodek at each update loop.");
 		//Configurator.setSetting("FILMING_FLAG",false,"Set to true to save each frames to file.");
@@ -230,6 +230,8 @@ public class Configurator {
 		 */
 		Configurator.setSetting("LOCATION_CITY_STR","Madrid","City where Mimodek is running.");
 		Configurator.setSetting("LOCATION_COUNTRY_STR","Spain","Country where Mimodek is running.");
+		
+		Configurator.setSetting("WU_API_KEY_STR","not specified","Key for the Weather Underground API");
 		/*
 		 * NOTE: Coordinates have priority on City and Country when searching for a weather station so don't set them unless you are absolutely sure they are right or you might get weather data for Tombouctou.
 		 * Latitude: 16.73222222
@@ -341,6 +343,14 @@ public class Configurator {
 		//figure out to what the value should be casted to
 		Class<?> targetClass = currentVal.getClass();
 		Class<?> sourceClass = value.getClass();
+		
+		//Check if the class are equals
+		if( targetClass.equals( sourceClass ) ){
+			settings.put(name, value );
+			return;
+		}
+		
+		//Otherwise convert
 		try {
 			Method conversionMethod = sourceClass.getMethod( targetClass.getSimpleName().toLowerCase()+"Value", (Class<?>[])null);
 			settings.put(name, conversionMethod.invoke( value, (Object[])null ) );
@@ -591,9 +601,9 @@ public class Configurator {
 	 * @throws Exception the exception
 	 */
 	protected void loadFromFil(String fileName) throws Exception {
-		XML xml;
-		xml = app.loadXML(fileName);
-		XML[] settings = xml.getChildren("settings");
+		XML xml = app.loadXML(fileName);
+		
+		XML[] settings = xml.getChildren("setting");
 		//int numSettings = xml.getChildCount();
 		for (int i = 0; i < settings.length; i++) {
 			XML kid = settings[i];
@@ -602,6 +612,7 @@ public class Configurator {
 			if(kid.hasAttribute("description"))
 				description = kid.getString("description");
 			String value = kid.getContent();
+			
 			// try to parse to find the correct type
 			// NOTE : the order of the calls to the method is important
 			if (isInteger(value)) {
