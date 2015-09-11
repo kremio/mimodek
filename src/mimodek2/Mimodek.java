@@ -28,22 +28,22 @@ public class Mimodek implements TrackingListener {
 	public static ArrayList<Cell> theCells = new ArrayList<Cell>();
 	
 	/** The a cells. */
-	public static ArrayList<CellA> aCells = new ArrayList<CellA>();
+	public volatile static ArrayList<CellA> aCells = new ArrayList<CellA>();
 	
 	/** The b cells. */
-	public static ArrayList<CellB> bCells = new ArrayList<CellB>();
+	public volatile static ArrayList<CellB> bCells = new ArrayList<CellB>();
 	
 	/** The growing cells. */
 	public static ArrayList<Cell> growingCells = new ArrayList<Cell>();
 
 	/** The foods. */
-	public static ArrayList<Food> foods = new ArrayList<Food>();
+	public volatile static ArrayList<Food> foods = new ArrayList<Food>();
 	
 	/** The food average position. */
 	public static PVector foodAvg = new PVector(0, 0);
 	
 	/** The creatures. */
-	public static ArrayList<Creature> creatures = new ArrayList<Creature>();
+	public volatile static ArrayList<Creature> creatures = new ArrayList<Creature>();
 
 	/** The scent map. */
 	public static QTree scentMap;
@@ -65,8 +65,25 @@ public class Mimodek implements TrackingListener {
 	private static Object[] callArgumentsAfterRender;
 	
 	/* For sorting leaves at render time */
+	private ArrayList<CellB> leaves = new ArrayList<CellB>();
 	private ArrayList<CellB> deadLeaves = new ArrayList<CellB>();
 	private ArrayList<CellB> carriedLeaves = new ArrayList<CellB>();
+	
+	private static Thread updateThread;
+	
+	class UpdateRunnable implements Runnable{
+		
+		public void run() {
+			while(true){
+				scentMap.update();
+			}
+		}
+		
+	}
+	
+	public static float fps(){
+		return app.frameRate;
+	}
 	
 	public static void reset(){
 		scentMap = new QTree(0, 0, FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, 1);
@@ -180,10 +197,15 @@ public class Mimodek implements TrackingListener {
 		//Create JavaScript console
 		try {
 			jsConsole = new JSConsole("js/InitConsole.js");
+			jsConsole.runCommand("help()");
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		updateThread = new Thread(new UpdateRunnable( ));
+		updateThread.start();
+		
 		
 	}
 	
@@ -212,17 +234,11 @@ public class Mimodek implements TrackingListener {
 	 * Update.
 	 */
 	public void update() {
-		if(pause){
-			return;
-		}
 		
 		if ( Configurator.getBooleanSetting("AUTO_FOOD") ) {
 			//randomly add food
 			genetics.addFood();
 		}
-
-
-		scentMap.update();
 
 		// Update cells
 		for (int i = 0; i < theCells.size(); i++)
@@ -288,7 +304,7 @@ public class Mimodek implements TrackingListener {
 					}
 					continue; //only render the stems under the A Cells if the leaf is not being carried
 				}
-				
+				leaves.add( cellB );
 				Renderer.renderWithoutShader( renderBuffer, cellB );
 			}
 		}
@@ -305,10 +321,10 @@ public class Mimodek implements TrackingListener {
 			}
 		}
 		
-		if (bCells.size() > 0){
+		if (leaves.size() > 0){
 			
 			Renderer.setUniforms(bCells.get(0));
-			for (CellB cellB : bCells){
+			for (CellB cellB : leaves){
 				if( cellB.moving || cellB.eatable )
 					continue;
 				Renderer.render(renderBuffer, cellB);
@@ -367,6 +383,7 @@ public class Mimodek implements TrackingListener {
 			Renderer.render(app.g, creature );
 		
 		//De-reference
+		leaves.clear();
 		deadLeaves.clear();
 		carriedLeaves.clear();
 		
