@@ -40,14 +40,24 @@ public class MimodekPApplet extends PApplet{
 	
 	float mouseIntX;
 	float mouseIntY;
-	boolean zoomOn = false;;
+	boolean zoomOn = false;
+	boolean translateOn = false;
 	
 	public void keyPressed(){
 		if(key == ' ' && !zoomOn){
 			mouseIntX = mouseX;
 			mouseIntY = mouseY;
-			Navigation.setZoomCenter(mouseX, mouseY);
+			//Navigation.setZoomCenter(mouseX, mouseY);
+			Navigation.setZoomTarget(mouseX, mouseY);
 			zoomOn = true;
+			translateOn = false;
+		}
+		
+		if(key == CODED){
+			if(keyCode == SHIFT){
+				zoomOn = false;
+				translateOn = true;
+			}
 		}
 		
 		if(key == 'r'){
@@ -62,10 +72,12 @@ public class MimodekPApplet extends PApplet{
 	
 	public void keyReleased(){
 		zoomOn = false;
+		translateOn = false;
 	}
 	
 	public void mouseRealeased(){
 		zoomOn = false;
+		translateOn = false;
 	}
 	
 	public void mousePressed(){
@@ -81,6 +93,10 @@ public class MimodekPApplet extends PApplet{
 		if(zoomOn){
 			Navigation.zoom(pmouseX, pmouseY , mouseX , mouseY);
 			return;
+		}
+		
+		if(translateOn){
+			Navigation.translate(pmouseX, pmouseY , mouseX , mouseY);
 		}
 		
 		Food.dropFood(FacadeFactory.getFacade().mouseX/Configurator.getFloatSetting("GLOBAL_SCALING") + (-1f + (float) Math.random() * 2),FacadeFactory.getFacade().mouseY/Configurator.getFloatSetting("GLOBAL_SCALING") + (-1f + (float) Math.random() * 2));
