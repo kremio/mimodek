@@ -1,9 +1,8 @@
-package mimodek2;
+package juttu.jsconsole;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-
 import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.util.Stack;
@@ -351,6 +350,27 @@ public class JSConsole implements CaretListener{
 		
 		//Init a new command prompt
 		newPrompt();
+	}
+	
+	public JSConsole(String pathToBootFile) throws FileNotFoundException{
+		this();
+		loadJSFile(pathToBootFile);
+	}
+	
+	public void loadJSFile(String pathToJSFile) throws FileNotFoundException{
+		BufferedReader in  = new BufferedReader(new FileReader( pathToJSFile ));
+		try {
+			engine.eval(in);
+		} catch (ScriptException e) {
+			errorOutput( e.getMessage() );
+		} finally{
+			try {
+				in.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	public void openConsole(){

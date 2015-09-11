@@ -1,9 +1,11 @@
 
 package mimodek2;
+import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+import juttu.jsconsole.JSConsole;
 import mimodek2.tracking.*;
 import mimodek2.data.*;
 import mimodek2.bio.*;
@@ -176,17 +178,13 @@ public class Mimodek implements TrackingListener {
 		Navigation.setup();
 		
 		//Create JavaScript console
-		jsConsole = new JSConsole();
-		//AGive access to the configurator from the JS console through a <b>Mimodek</b> object
-		jsConsole.runCommand("Mimodek = Java.type('mimodek2.Configurator')", true);
-		jsConsole.runCommand("IO = Java.type('mimodek2.serializer.LoaderSaver')", true);
-		jsConsole.runCommand("Mimodek.setSetting('AUTO_FOOD', true);", true);
-		jsConsole.runCommand("CellA = Java.type('mimodek2.bio.CellA');", true);
-		jsConsole.runCommand("TemperatureColorRanges = Java.type('mimodek2.data.TemperatureColorRanges');", true);
-		//jsConsole.runCommand("myColor = ', true);", true);
+		try {
+			jsConsole = new JSConsole("js/InitConsole.js");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
-		
-		//(new Thread(jsConsole)).start();
 	}
 	
 	/*
