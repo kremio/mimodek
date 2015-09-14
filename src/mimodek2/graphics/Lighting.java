@@ -18,7 +18,7 @@ public class Lighting {
 	private static PShader shadowMapShader;
 	
 	private static PShader lightShader;
-	private static PImage lightImage;
+	//private static PImage lightImage;
 	//private static PGraphics litArea;
 	
 	public static void setup(PApplet app, int lightSize){
@@ -38,7 +38,7 @@ public class Lighting {
 		lightShader = app.loadShader("glsl/light_frag.glsl");
 		lightShader.set("resolution", (float)lightSize, (float)lightSize);
 		
-		lightImage = app.createImage(lightSize, lightSize, PApplet.ARGB);
+		//lightImage = app.createImage(lightSize, lightSize, PApplet.ARGB);
 	}
 	
 	public static PImage computeShadowMap(PImage occludersTexture, float x, float y){
