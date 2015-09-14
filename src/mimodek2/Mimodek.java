@@ -190,6 +190,9 @@ public class Mimodek implements TrackingListener {
 		
 		//Init the renderer
 		Renderer.setup(app);
+
+		Lighting.setup(app, 256);
+		//Background.setup(app, app.color(0,0,0,0));
 		
 		//Init navigation
 		Navigation.setup();
@@ -373,6 +376,20 @@ public class Mimodek implements TrackingListener {
 		app.popMatrix();
 		
 		//Render the living cells
+		
+		
+		
+		
+		app.image(renderBuffer, 0, 0);
+		
+		// Shadow casting lights from creatures
+		// Could be modulated by the distance of the creature to the organism
+		for (int i = 0; i < creatures.size(); i++) {
+			if (!creatures.get(i).hasFood)
+				continue;
+			Lighting.render(app, renderBuffer, creatures.get(i).pos);
+		}
+
 		app.resetShader();
 		app.image(renderBuffer, 0, 0);
 		
