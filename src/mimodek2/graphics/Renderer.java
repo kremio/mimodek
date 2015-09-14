@@ -108,6 +108,7 @@ public class Renderer {
 		cellShader.set("mask", cellB_MaskTexture);
 		cellShader.set("noDeform", true);
 		cellShader.set("theTexture", CellB.texture);
+		cellShader.set("depth", 1.0f);
 	}
 	
 	public static void setTime(float t){
@@ -125,6 +126,9 @@ public class Renderer {
 	}
 	
 	public static void render(PGraphics renderBuffer, CellA cellA){
+		float depth = (((float)cellA.level) / ((float)CellA.maxLevel) ) + 0.7f;
+		//depth = PApplet.min(1f, depth);
+		
 		renderBuffer.pushStyle();
 		
 		renderBuffer.noLights();
@@ -132,6 +136,8 @@ public class Renderer {
 		//Set the tint color
 		int c = mimodek2.data.TemperatureColorRanges.getColor( CellA.temperatureInterpolator.getInterpolatedValue( PApplet.lerp(1f,0f,(float)cellA.level/(float)CellA.maxLevel) ) );
 		setShaderColorUniform(cellShader, "cellColor", c, Configurator.getFloatSetting("CELLA_ALPHA") );
+		
+		cellShader.set("depth", depth);
 		
 		//Place and rotate the cell
 		renderBuffer.pushMatrix();
@@ -214,7 +220,11 @@ public class Renderer {
 			}
 			int deadColor = renderBuffer.color(0.8f);
 			c = renderBuffer.lerpColor(cell.color,deadColor,step);
+			cellShader.set("depth", 0.7f);
 		}else{
+			
+			float depth = cell.moving ? 1.7f : (((float)((CellA)anchor).level) / ((float)CellA.maxLevel) ) + 0.7f;
+			cellShader.set("depth", depth);
 			c = cell.color;	
 		}
 		
