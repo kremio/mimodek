@@ -58,7 +58,8 @@ public class Mimodek implements TrackingListener {
 	/* JS Console */
 	public JSConsole jsConsole;
 	
-	public static boolean pause = false;
+	public static float lightX = 0;
+	public static float lightY = 0;
 
 	/* Post render hook callback */
 	private static Method callAfterRender;
@@ -271,8 +272,8 @@ public class Mimodek implements TrackingListener {
 	}
 	
 	public void draw(){
-		if(pause)
-			return;
+		
+		app.blendMode(PApplet.BLEND);
 		
 		//Init global drawing parameters
 		renderBuffer.beginDraw();
@@ -380,21 +381,37 @@ public class Mimodek implements TrackingListener {
 		
 		
 		
-		app.image(renderBuffer, 0, 0);
+		//app.image(renderBuffer, 0, 0);
 		
 		// Shadow casting lights from creatures
 		// Could be modulated by the distance of the creature to the organism
+		/*
 		for (int i = 0; i < creatures.size(); i++) {
 			if (!creatures.get(i).hasFood)
 				continue;
 			Lighting.render(app, renderBuffer, creatures.get(i).pos);
 		}
+		*/
 
 		app.resetShader();
 		app.image(renderBuffer, 0, 0);
 		
+		
+		
 		//Render the creatures on top of everything
 		Navigation.applyTransform(app.g);
+		
+		app.blendMode(PApplet.ADD);
+		
+		app.tint(0.5f);
+		for (Creature creature : creatures){
+			
+			app.image(Renderer.creatureTexture, creature.pos.x - 32f, creature.pos.y - 32f, 64f, 64f);
+		}
+		app.noTint();
+		
+		app.blendMode(PApplet.BLEND);
+		
 		app.shader( Renderer.getCreatureShader() );
 		for (Creature creature : creatures)
 			Renderer.render(app.g, creature );

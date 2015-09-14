@@ -31,8 +31,9 @@ public class MimodekPApplet extends PApplet{
 	}
 
 	public void draw() {
+
 		mimodek.callAfterRender();
-		background( .33f );
+		background( 0 /*.33f */ );
 		mimodek.update();
 		mimodek.draw();
 		

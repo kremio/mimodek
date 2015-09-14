@@ -16,7 +16,7 @@ public class Renderer {
 	private static PImage cellB_MaskTexture;
 	
 	private static PShader creatureShader;
-	private static PImage creatureTexture;
+	public static PImage creatureTexture;
 	
 	private static PShader foodShader;
 	
