@@ -348,6 +348,8 @@ public class JSConsole implements CaretListener{
 		consoleFrame.add(scrollPane);
 		consoleFrame.setVisible(true);
 		
+		bindToJs("console", this);
+		
 		//Init a new command prompt
 		newPrompt();
 	}

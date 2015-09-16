@@ -28,22 +28,22 @@ public class Mimodek implements TrackingListener {
 	public static ArrayList<Cell> theCells = new ArrayList<Cell>();
 	
 	/** The a cells. */
-	public volatile static ArrayList<CellA> aCells = new ArrayList<CellA>();
+	public  static ArrayList<CellA> aCells = new ArrayList<CellA>();
 	
 	/** The b cells. */
-	public volatile static ArrayList<CellB> bCells = new ArrayList<CellB>();
+	public  static ArrayList<CellB> bCells = new ArrayList<CellB>();
 	
 	/** The growing cells. */
 	public static ArrayList<Cell> growingCells = new ArrayList<Cell>();
 
 	/** The foods. */
-	public volatile static ArrayList<Food> foods = new ArrayList<Food>();
+	public  static ArrayList<Food> foods = new ArrayList<Food>();
 	
 	/** The food average position. */
 	public static PVector foodAvg = new PVector(0, 0);
 	
 	/** The creatures. */
-	public volatile static ArrayList<Creature> creatures = new ArrayList<Creature>();
+	public  static ArrayList<Creature> creatures = new ArrayList<Creature>();
 
 	/** The scent map. */
 	public static QTree scentMap;
@@ -79,6 +79,10 @@ public class Mimodek implements TrackingListener {
 			}
 		}
 		
+	}
+	
+	public static void useRealData() throws Exception{
+		DataHandler.getInstance(null, null).useRealData(app);
 	}
 	
 	public static float fps(){
@@ -268,8 +272,6 @@ public class Mimodek implements TrackingListener {
 	}
 	
 	public void draw(){
-		if(pause)
-			return;
 		
 		//Init global drawing parameters
 		renderBuffer.beginDraw();
@@ -366,8 +368,8 @@ public class Mimodek implements TrackingListener {
 		//Render the food
 		if (foods.size() > 0) {
 			app.shader(Renderer.getFoodShader(), PApplet.POINTS);
-			for (int i = 0; i < foods.size(); i++)
-				Renderer.render(app.g, foods.get(i));
+			for (Food food: foods)
+				Renderer.render(app.g, food);
 		}
 		
 		app.popMatrix();
@@ -377,6 +379,7 @@ public class Mimodek implements TrackingListener {
 		app.image(renderBuffer, 0, 0);
 		
 		//Render the creatures on top of everything
+		app.pushMatrix();
 		Navigation.applyTransform(app.g);
 		app.shader( Renderer.getCreatureShader() );
 		for (Creature creature : creatures)
@@ -386,6 +389,18 @@ public class Mimodek implements TrackingListener {
 		leaves.clear();
 		deadLeaves.clear();
 		carriedLeaves.clear();
+		
+		app.popMatrix(); //Render pass end
+		
+		if(Configurator.getBooleanSetting("SHOW_DATA_FLAG")){
+			app.text("Observation at: "+WeatherUndergroundClient.getLatestTimestamp(), 20, 20, 1);
+			app.text("Temperature: "+Configurator.getFloatSetting("DATA_TEMPERATURE"), 20, 40, 1);
+			app.text("Humidity: "+Configurator.getFloatSetting("DATA_HUMIDITY"), 20, 60, 1);
+			app.text("FPS: "+app.frameRate, 20, 90, 1);
+			app.text("Cells:" + aCells.size(), 20, 110, 1);
+			app.text("Leaves:" + bCells.size(), 20, 130, 1);
+			app.text("Creatures:" + creatures.size(), 20, 150, 1);
+		}
 		
 		//Run callback, if any
 		callAfterRender();

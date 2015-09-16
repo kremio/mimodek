@@ -126,6 +126,7 @@ public class Configurator {
 		Configurator.setSetting("FAKE_DATA_FLAG",false,"Set to true to control the data value from the UI.");
 		Configurator.setSetting("AUTO_START_FLAG",true,"Set to true to start running Mimodek right after the program has loaded.");
 		Configurator.setSetting("AUTO_FOOD",false,"Set to true to feed Mimodek at each update loop.");
+		Configurator.setSetting("SHOW_DATA_FLAG", false, "Set to true to display the current temperature and humidity");
 		//Configurator.setSetting("FILMING_FLAG",false,"Set to true to save each frames to file.");
 		
 		/*

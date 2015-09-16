@@ -47,7 +47,7 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 	public ArrayList<DataInterpolator> dataInterpolators = new ArrayList<DataInterpolator>();
 	
 	/** The wunderground. */
-	public WeatherUndergroundClient wunderground;
+	protected WeatherUndergroundClient wunderground;
 	
 	/** The mapping. */
 	public HashMap<String,String> mapping = new HashMap<String,String>();
@@ -122,21 +122,21 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 		
 		if (!Configurator.getBooleanSetting("FAKE_DATA_FLAG")) {
 
-			// Weather underground
+			// Weather underground data source
 			wunderground = new WeatherUndergroundClient(app);
-			//wunderground.findStation(location);
-			/*
-			// Wordpress plugin
-			this.xmlReceiver = new XMLReceiver(app,
-					Configurator.getStringSetting("WORDPRESS_URL_STR"));
-			xmlReceiver.setListener(this);
-			*/
 			
 		}
 		
 		runner = new Thread(this);
 		instanceCounter++;
 		Verbose.debug("I'm instance #"+instanceCounter);
+	}
+	
+	public void useRealData(PApplet app){
+		if( wunderground == null ){
+			wunderground = new WeatherUndergroundClient(app);
+		}
+		Configurator.setSetting("FAKE_DATA_FLAG", false);		
 	}
 	
 	/**
@@ -183,24 +183,19 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 	 */
 	public void run() {
 		while ( run ) {
-			//Mimodek.dataUpdate = true;
 			try {
-				//Verbose.debug("DataHandler #"+instanceCounter);
-				
 				if(Configurator.getBooleanSetting("FAKE_DATA_FLAG")){
 					
 					for(int i=0;i<dataInterpolators.size();i++)
 						dataInterpolators.get(i).update();
 					
-				}else{
-					//query the wordpress plugin
-					//xmlReceiver.getFreshData(location.city);
+				}else if( wunderground != null ){
+					//Query fresh data
 					if(wunderground.readLatestObservation(location, mapping)){
 						for(int i=0;i<dataInterpolators.size();i++)
 							dataInterpolators.get(i).update();
 					}
 				}
-				//ParameterControlWindow.setData();
 				
 					
 				Thread.sleep((long)(Configurator.getFloatSetting("DATA_REFRESH_RATE") * 60 * 1000));
@@ -213,6 +208,13 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 
 	}
 
+	/**
+	 * TODO: What follows should most likely be removed.  
+	 */
+	
+	/**
+	 * @param messages
+	 */
 	/*
 	 * This deals with the data returned by the wordpress plugin (pollution,...), not the weather data
 	 */

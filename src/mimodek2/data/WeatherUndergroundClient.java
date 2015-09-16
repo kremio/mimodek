@@ -40,6 +40,12 @@ public class WeatherUndergroundClient {
 	/** The Constant GEO_LOOKUP_URL. */
 	public final static String GEO_LOOKUP_URL = "http://api.wunderground.com/api/";
 	
+	private static String LATEST_OBSERVATION_TS = "No data queried yet.";
+	
+	public static String getLatestTimestamp(){
+		return LATEST_OBSERVATION_TS;
+	}
+	
 	/** The Constant CURRENT_OBSERVATION_URL. */
 	//public final static String CURRENT_OBSERVATION_URL = "http://api.wunderground.com/weatherstation/WXCurrentObXML.asp";
 	
@@ -118,8 +124,10 @@ public class WeatherUndergroundClient {
 			JSONObject currentObservation = jsonObject.getJSONObject("current_observation");
 			
 			
-			Verbose.overRule("Reading weather data from station:"+currentObservation.getString("station_id"));
-			Verbose.debug( currentObservation.getString("observation_time") );
+			//Verbose.overRule("Reading weather data from station:"+);
+			
+			WeatherUndergroundClient.LATEST_OBSERVATION_TS = currentObservation.getString("observation_time");
+			//Verbose.debug( currentObservation.getString("observation_time") );
 			
 			Iterator<Entry<String, String>> wuIt = wuToMimodek.entrySet().iterator();
 			float observation;
@@ -132,7 +140,7 @@ public class WeatherUndergroundClient {
 					observation = Float.parseFloat( currentObservation.getString( wu.getKey() ).replaceAll("[^0-9.]", "") );
 				}
 				Configurator.setSetting(wu.getValue(),  observation ); // Float.parseFloat( xml.getChild(wu.getKey()).getContent())  );
-				Verbose.debug(wu.getValue()+","+Configurator.getFloatSetting(wu.getValue()));
+				//Verbose.debug(wu.getValue()+","+Configurator.getFloatSetting(wu.getValue()));
 			}
 			return true;
 			
@@ -140,53 +148,7 @@ public class WeatherUndergroundClient {
 			e.printStackTrace();
 			return false;
 		}
-		
-		/*
-		if(stationIds.size()<1){
-			if(!findStation(location))
-				return false;
-		}
-		try{
-			boolean stationOk = false;
-			XML xml = app.loadXML( CURRENT_OBSERVATION_URL+"?ID="+stationIds.get(useStation));
-			while(!stationOk){
-				//check the validity of the response
-				if(!xml.getChild("station_id").getContent().equalsIgnoreCase(stationIds.get(useStation))){
-					useStation++;
-					if(useStation>=stationIds.size()){
-						useStation = 0;
-						return false;
-					}
-				}else{
-					stationOk = true;
-				}
-			}
-			Verbose.overRule("Reading weather data from station:"+stationIds.get(useStation));
-			Verbose.debug(xml.getChild("observation_time").getContent());
-			Iterator<Entry<String, String>> wuIt = wuToMimodek.entrySet().iterator();
-			while(wuIt.hasNext()){
-				Entry<String, String> wu = wuIt.next();
-				Configurator.setSetting(wu.getValue(),Float.parseFloat(xml.getChild(wu.getKey()).getContent()));
-				Verbose.debug(wu.getValue()+","+Configurator.getFloatSetting(wu.getValue()));
-			}
-			return true;
-		}catch(Exception e){
-			//useStation
-			//e.printStackTrace();
-			//try to recover by switching to next station
-			Verbose.overRule("An error happened reading weather data from station "+stationIds.get(useStation));
-			if(useStation<stationIds.size()-2){
-				useStation++;
-			}else{
-				if(!findStationByCityAndCountry(location)){
-					Verbose.overRule("No weather station for "+location+" has been found. Weather data won't be updated.");
-					return false;
-				}
-			}
-			Verbose.overRule("Weather data will now be read from station: "+stationIds.get(useStation)+".");
-			return readLatestObservation(location, wuToMimodek);
-		}
-		*/
+	
 	}
 	
 	
