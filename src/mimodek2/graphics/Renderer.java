@@ -199,6 +199,7 @@ public class Renderer {
 	}
 	
 	public static void render(PGraphics renderBuffer, CellB cell){
+		
 		renderBuffer.pushStyle();
 		
 		renderBuffer.noLights();
