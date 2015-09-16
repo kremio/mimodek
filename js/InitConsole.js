@@ -3,6 +3,10 @@ IO = Java.type('mimodek2.serializer.LoaderSaver');
 fps = Java.type('mimodek2.Mimodek').fps;
 Mimodek.setSetting('AUTO_FOOD', true);
 
+showDepth = function(){
+  Java.type('mimodek2.Mimodek').showDepth = !Java.type('mimodek2.Mimodek').showDepth;
+}
+
 help = function(){
   var msg = "Mimodek Console - V 0.1\n";
      msg += "-*-*-*-*-*-*-*-*-*-*-*-\n";

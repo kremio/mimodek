@@ -102,6 +102,8 @@ public class Renderer {
 		cellShader.set("mask", cellA_MaskTexture);
 		cellShader.set("noDeform", false);
 		cellShader.set("theTexture", CellA.texture);
+		cellShader.set("depth", 1.0f);
+		cellShader.set("depthOnly", false);
 	}
 	
 	public static void setUniforms(CellB cellB){
@@ -109,34 +111,37 @@ public class Renderer {
 		cellShader.set("noDeform", true);
 		cellShader.set("theTexture", CellB.texture);
 		cellShader.set("depth", 1.0f);
+		cellShader.set("depthOnly", false);
 	}
 	
 	public static void setTime(float t){
 		cellShader.set("time", t);
 	}
 	
+	/*
 	public static void renderDepth(PGraphics renderBuffer, CellA cellA){
 		cellShader.set("depth", (float)cellA.level / (float)CellA.maxLevel );
 		
 		render(renderBuffer, cellA);
 	}
+	*/
 	
 	public static void setShaderColorUniform(PShader shader, String uniformName, int rgb255, float alpha){
 		shader.set(uniformName, (rgb255 >> 16 & 0xFF)/255f, (rgb255 >> 8 & 0xFF)/255f, (rgb255 & 0xFF)/255f, alpha );
 	}
 	
-	public static void render(PGraphics renderBuffer, CellA cellA){
+	public static void render(PGraphics renderBuffer, CellA cellA, boolean depthPass){
 		float depth = (((float)cellA.level) / ((float)CellA.maxLevel) ) + 0.7f;
 		//depth = PApplet.min(1f, depth);
 		
 		renderBuffer.pushStyle();
 		
-		renderBuffer.noLights();
-		
-		//Set the tint color
-		int c = mimodek2.data.TemperatureColorRanges.getColor( CellA.temperatureInterpolator.getInterpolatedValue( PApplet.lerp(1f,0f,(float)cellA.level/(float)CellA.maxLevel) ) );
-		setShaderColorUniform(cellShader, "cellColor", c, Configurator.getFloatSetting("CELLA_ALPHA") );
-		
+		if( !depthPass ){		
+			//Set the tint color
+			int c = mimodek2.data.TemperatureColorRanges.getColor( CellA.temperatureInterpolator.getInterpolatedValue( PApplet.lerp(1f,0f,(float)cellA.level/(float)CellA.maxLevel) ) );
+			setShaderColorUniform(cellShader, "cellColor", c, Configurator.getFloatSetting("CELLA_ALPHA") );
+		}
+		cellShader.set("depthOnly", depthPass);
 		cellShader.set("depth", depth);
 		
 		//Place and rotate the cell
@@ -159,6 +164,11 @@ public class Renderer {
 		renderBuffer.popMatrix();
 		
 		renderBuffer.popStyle();
+	}
+	
+	public static void render(PGraphics renderBuffer, CellA cellA) {
+		render(renderBuffer, cellA, false);
+		
 	}
 	
 	public static void renderWithoutShader(PGraphics renderBuffer, CellB cell){
@@ -199,10 +209,13 @@ public class Renderer {
 	}
 	
 	public static void render(PGraphics renderBuffer, CellB cell){
+		render(renderBuffer, cell, false);
+	}
+	
+	public static void render(PGraphics renderBuffer, CellB cell, boolean depthPass){
 		
 		renderBuffer.pushStyle();
 		
-		renderBuffer.noLights();
 		Cell anchor = cell.anchor;
 		if(cell.creatureA !=null && cell.creatureB !=null && cell.creatureA.readyToLift && cell.creatureB.readyToLift){
 			cell.zLevel = CellA.maxLevel;
@@ -229,8 +242,12 @@ public class Renderer {
 			c = cell.color;	
 		}
 		
-		//Set the tint color
-		setShaderColorUniform(cellShader, "cellColor", c, cell.currentBrightness );
+		cellShader.set("depthOnly", depthPass);
+		
+		if( !depthPass ){
+			//Set the tint color
+			setShaderColorUniform(cellShader, "cellColor", c, cell.currentBrightness );
+		}
 		
 		//Draw the leaf
 		renderBuffer.pushMatrix();
@@ -296,4 +313,6 @@ public class Renderer {
 		renderBuffer.point(food.x, food.y);
 		renderBuffer.popStyle();
 	}
+
+
 }

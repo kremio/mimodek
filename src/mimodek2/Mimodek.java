@@ -52,14 +52,14 @@ public class Mimodek implements TrackingListener {
 	public static LSystem genetics;
 	
 	public static PGraphics renderBuffer;
+	public static PGraphics depthBuffer;
 	
 	public PImage cellsAPass;
 	
 	/* JS Console */
 	public JSConsole jsConsole;
 	
-	public static float lightX = 0;
-	public static float lightY = 0;
+	public static boolean showDepth = true;
 
 	/* Post render hook callback */
 	private static Method callAfterRender;
@@ -111,6 +111,7 @@ public class Mimodek implements TrackingListener {
 		FacadeFactory.createFacade(facadeType, app).border = 10f;
 		
 		renderBuffer = app.createGraphics(FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, PApplet.P3D);
+		depthBuffer = app.createGraphics(FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, PApplet.P3D);
 		
 		app.textureMode(PApplet.NORMAL);
 		app.colorMode(PApplet.RGB, 1.0f);
@@ -273,6 +274,8 @@ public class Mimodek implements TrackingListener {
 	
 	public void draw(){
 		
+		float time = app.millis();
+		
 		app.blendMode(PApplet.BLEND);
 		
 		//Init global drawing parameters
@@ -284,7 +287,12 @@ public class Mimodek implements TrackingListener {
 		
 		renderBuffer.ortho(); //camera
 		renderBuffer.background(0,0); //clear previous frame
+		
+		
+		
+		
 		Navigation.applyTransform(renderBuffer); //set global transform
+		
 		
 		/*
 		 * Layout (from bottom to top):
@@ -314,14 +322,16 @@ public class Mimodek implements TrackingListener {
 		}
 		
 		/* Render the cells */
-		renderBuffer.shader( Renderer.getCellShader() );
+		renderBuffer.shader( Renderer.getCellShader() );		
 		
 		if (aCells.size() > 0) {
 			
 			Renderer.setUniforms(aCells.get(0));
+			
 			for (CellA cellA: aCells){
-				Renderer.setTime( (app.millis()+cellA.id*10f)/1000f * 0.5f );
+				Renderer.setTime( (time+cellA.id*10f)/1000f * 0.5f );
 				Renderer.render(renderBuffer, cellA);
+				
 			}
 		}
 		
@@ -339,7 +349,6 @@ public class Mimodek implements TrackingListener {
 		if (carriedLeaves.size() > 0){
 			//render stems of carried leafs
 			renderBuffer.resetShader();
-			renderBuffer.noLights();
 			for (CellB cellB : carriedLeaves){
 				if( cellB.creatureA != null && cellB.creatureB != null )
 					Renderer.renderWithoutShader( renderBuffer, cellB );//only render the stems above the A Cells if the leaf is not being carried
@@ -355,6 +364,46 @@ public class Mimodek implements TrackingListener {
 		
 		renderBuffer.endDraw();
 		
+		
+		//Init depth FBO
+		depthBuffer.beginDraw();
+		depthBuffer.hint(PApplet.DISABLE_DEPTH_MASK);
+		depthBuffer.textureMode(PApplet.NORMAL);
+		depthBuffer.colorMode(PApplet.RGB, 1.0f);
+		depthBuffer.strokeCap(PApplet.SQUARE);
+
+		depthBuffer.ortho(); // camera
+		depthBuffer.background(0, 0); // clear previous frame
+		
+		Navigation.applyTransform(depthBuffer); //set global transform
+		
+		depthBuffer.shader( Renderer.getCellShader() );
+		
+		if (aCells.size() > 0) {
+			
+			Renderer.setUniforms(aCells.get(0));
+			
+			for (CellA cellA: aCells){
+				Renderer.setTime( (time+cellA.id*10f)/1000f * 0.5f );
+				Renderer.render(depthBuffer, cellA, true);
+				
+			}
+			
+			if (leaves.size() > 0){
+				
+				Renderer.setUniforms(bCells.get(0));
+				for (CellB cellB : leaves){
+					if( cellB.moving || cellB.eatable )
+						continue;
+					Renderer.render(depthBuffer, cellB, true);
+				}
+			}
+		}
+		
+		depthBuffer.endDraw();
+		
+		
+		/* Compose the final image from the multiple passes */
 		app.resetShader();
 		app.pushMatrix();
 		Navigation.applyTransform(app.g);
@@ -377,24 +426,13 @@ public class Mimodek implements TrackingListener {
 		app.popMatrix();
 		
 		//Render the living cells
-		
-		
-		
-		
-		//app.image(renderBuffer, 0, 0);
-		
-		// Shadow casting lights from creatures
-		// Could be modulated by the distance of the creature to the organism
-		/*
-		for (int i = 0; i < creatures.size(); i++) {
-			if (!creatures.get(i).hasFood)
-				continue;
-			Lighting.render(app, renderBuffer, creatures.get(i).pos);
-		}
-		*/
-
 		app.resetShader();
 		app.image(renderBuffer, 0, 0);
+		
+		if( showDepth ){
+			app.image(depthBuffer, 0, 0);
+		}
+		
 		
 		
 		
