@@ -1,26 +1,25 @@
 package mimodek2.bio;
 
 /*
-This is the code source of Mimodek. When not stated otherwise,
-it was written by Jonathan 'Jonsku' Cremieux<jonathan.cremieux@aalto.fi> in 2010. 
-Copyright (C) yyyy  name of author
+ This is the code source of Mimodek. When not stated otherwise,
+ it was written by Jonathan 'Jonsku' Cremieux<jonathan.cremieux@aalto.fi> in 2010. 
+ Copyright (C) yyyy  name of author
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; either version 2
+ of the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-*/
-
+ */
 
 import java.util.HashMap;
 
@@ -34,10 +33,10 @@ import processing.core.PVector;
  * The Class Creature.
  */
 public class Creature extends Cell {
-	
+
 	/** The vel. */
 	public PVector vel;
-	
+
 	/** The acc. */
 	public PVector acc;
 
@@ -49,88 +48,89 @@ public class Creature extends Cell {
 
 	/** The work counter. */
 	public int workCounter = 0;
-	
+
 	/** The cell b. */
 	public CellB cellB;
 
 	/** The high lander. */
 	public boolean highLander = false;
-	
+
 	/** The energy. */
 	public float energy;
 
 	/** The ready to lift. */
 	public boolean readyToLift = false;
-	
+
 	/** The current brightness. */
 	public float currentBrightness = 1f;
-	
+
 	/** The next offset brightness. */
 	public float nextOffsetBrightness = 0.5f;
 
 	/** The food sight. */
 	public PVector foodSight;
-	
-	
-	public HashMap<String, Object> getState(){
+
+	public HashMap<String, Object> getState() {
 		HashMap<String, Object> state = super.getState();
-		
+
 		state.put("velX", vel.x);
 		state.put("velY", vel.y);
 		state.put("accX", acc.x);
 		state.put("accY", acc.y);
-		state.put("hasFood", hasFood);		
+		state.put("hasFood", hasFood);
 		state.put("workCounter", workCounter);
-		if(cellB != null)
+		if (cellB != null)
 			state.put("cellB", cellB.id);
-		
+
 		state.put("highLander", highLander);
 		state.put("energy", energy);
 		state.put("readyToLift", readyToLift);
 		state.put("currentBrightness", currentBrightness);
 		state.put("nextOffsetBrightness", nextOffsetBrightness);
-		
-		if(lastFoodPos != null ){
+
+		if (lastFoodPos != null) {
 			state.put("lastFoodPosX", lastFoodPos.x);
 			state.put("lastFoodPosY", lastFoodPos.y);
 		}
-		if(foodSight != null){
+		if (foodSight != null) {
 			state.put("foodSightX", foodSight.x);
 			state.put("foodSightY", foodSight.y);
 		}
-	
+
 		return state;
 	}
-	
-	public void setState(HashMap<String, Object> state){
 
-		//Deal with vectors
-		if( state.containsKey("velX") && state.containsKey("velY") ){
-			this.vel = new PVector(Float.class.cast( state.get("velX") ), Float.class.cast( state.get("velY") ));
+	public void setState(HashMap<String, Object> state) {
+
+		// Deal with vectors
+		if (state.containsKey("velX") && state.containsKey("velY")) {
+			this.vel = new PVector(Float.class.cast(state.get("velX")), Float.class.cast(state.get("velY")));
 			state.remove("velX");
 			state.remove("velY");
 		}
-		if( state.containsKey("accX") && state.containsKey("accY") ){
-			this.acc = new PVector(Float.class.cast( state.get("accX") ), Float.class.cast( state.get("accY") ));
+		if (state.containsKey("accX") && state.containsKey("accY")) {
+			this.acc = new PVector(Float.class.cast(state.get("accX")), Float.class.cast(state.get("accY")));
 			state.remove("accX");
 			state.remove("accY");
 		}
-		if( state.containsKey("foodSightX") && state.containsKey("foodSightY") ){
-			this.foodSight = new PVector(Float.class.cast( state.get("foodSightX") ), Float.class.cast( state.get("foodSightY") ));
+		if (state.containsKey("foodSightX") && state.containsKey("foodSightY")) {
+			this.foodSight = new PVector(Float.class.cast(state.get("foodSightX")), Float.class.cast(state
+					.get("foodSightY")));
 			state.remove("foodSightX");
 			state.remove("foodSightY");
 		}
-		
+
 		super.setState(state);
-	
 
 	}
 
 	/**
 	 * Instantiates a new creature.
 	 *
-	 * @param pos the pos
-	 * @param highLander the high lander
+	 * @param pos
+	 *            the pos
+	 * @param highLander
+	 *            the high lander
 	 */
 	public Creature(PVector pos, boolean highLander) {
 		this(pos);
@@ -140,15 +140,16 @@ public class Creature extends Cell {
 	/**
 	 * Instantiates a new creature.
 	 *
-	 * @param pos the pos
+	 * @param pos
+	 *            the pos
 	 */
 	public Creature(PVector pos) {
 		super(pos);
 		this.pos = pos;
-		acc = new PVector(0, 0);
-		vel = new PVector((float) (-1 + Math.random() * 2), (float) (-1 + Math
-				.random() * 2));
-		// directionAngle = (float)Math.random()*PApplet.TWO_PI;
+		this.pos.z = CellA.MIN_DEPTH;
+		acc = new PVector(0, 0, 0);
+		vel = new PVector((float) (-1 + Math.random() * 2), (float) (-1 + Math.random() * 2), (float)Math.random());
+
 		lastUpdate = System.currentTimeMillis();
 		energy = 1f;
 	}
@@ -158,16 +159,17 @@ public class Creature extends Cell {
 	 */
 	public void update() {
 		long timeSinceUpdate = System.currentTimeMillis() - lastUpdate;
-		// deplete enregy every 2 seconds (2000 millis)
+		// deplete energy every 2 seconds (2000 millis)
 		if (cellB == null || cellB.eatable)
 			energy -= (timeSinceUpdate / 2000f) * 0.03f;
 		if (highLander && energy < 0.5f) {
 			energy = 0.4f;
 		} else if (energy <= 0f) {// it's dead...
-			// System.out.println("R.I.P.");
 			return;
 		}
+
 		lastUpdate = System.currentTimeMillis();
+
 		if (hasFood) {
 			Cell root = Mimodek.aCells.get(0);
 			if (pos.dist(root.pos) < 5) {
@@ -175,32 +177,25 @@ public class Creature extends Cell {
 				Mimodek.genetics.addFood();
 				hasFood = false;
 				seek(lastFoodPos);
-				/*
-				 * vel.x = -vel.x; vel.y = -vel.y;
-				 */
-				// directionAngle = directionAngle+PApplet.PI;
 				lastFoodPos = null;
 				workCounter++;
 			} else {
 				seek(root.pos);
 				// drop some scent
-				Mimodek.scentMap.addScent(pos.x - 5, pos.y - 5, 10, 10, 0.2f,
-						lastFoodPos);
+				Mimodek.scentMap.addScent(pos.x - 5, pos.y - 5, 10, 10, 0.2f, lastFoodPos);
 			}
 		} else {
 			// when energy is half full, seek for cell B to eat
 			if (energy < 0.5f && cellB == null) {
-				// go eat one Bcell
-				// System.out.println("I need to eat!!!");
 				cellB = CellB.getEatableCell();
 			}
-			if (cellB != null) {
+
+			if (cellB != null) { // Found something to eat
 				if (cellB.eatable) {
 					// go move a b cell
 					if (cellB.pos.dist(pos) < 5f) {
 						// eat
-						float amount = cellB.maturity >= 1f - energy ? 1f - energy
-								: cellB.maturity;
+						float amount = cellB.maturity >= 1f - energy ? 1f - energy : cellB.maturity;
 						cellB.maturity -= amount;
 						energy += amount;
 						cellB = null;
@@ -251,17 +246,17 @@ public class Creature extends Cell {
 				}
 			}
 		}
-		// println("b4: "+directionAngle);
+
 		if (cellB == null && !hasFood) {
 
 			// if we are very close to the food we saw before and it has
-			// dissapeared, look for another piece
+			// Disappeared, look for another piece
 			if (foodSight != null) {
-				if(pos.dist(foodSight) < 5f)
+				if (pos.dist(foodSight) < 5f)
 					foodSight = null;
 				else
 					seek(foodSight);
-			}else{
+			} else {
 				float directionAngle = PApplet.atan2(vel.y, vel.x);
 				float cD = smellAround(directionAngle);
 				if (cD == directionAngle) {
@@ -273,28 +268,22 @@ public class Creature extends Cell {
 						if (distT < 50 && distT < dist) {
 							dist = distT;
 							tmp = f;
-							// directionAngle = (float)
-							// ((float)PApplet.atan2(f.y-pos.y,f.x-pos.x)+((PApplet.PI/4)-Math.random()*PApplet.HALF_PI));
-							// break;
 						}
 					}
 					if (dist < 1000) {
 						foodSight = tmp;
 						seek(tmp);
 					} else if (Math.random() > 0.8) {
-						seek(new PVector((float) (Math.random() * FacadeFactory
-								.getFacade().width), (float) Math.random()
-								* FacadeFactory.getFacade().height));
-						// directionAngle +=
-						// PApplet.HALF_PI-Math.random()*PApplet.PI;
+						seek(new PVector((float) (Math.random() * FacadeFactory.getFacade().width),
+								(float) Math.random() * FacadeFactory.getFacade().height));
+
 					}
 				} else {
 					acc.add(new PVector(PApplet.cos(cD), PApplet.sin(cD)));
-					// directionAngle = cD;
 				}
 			}
 		}
-		// println("after: "+directionAngle);
+
 		// Apply separation rule
 		if (cellB != null && cellB.moving) {
 			PVector mnt = maintainDistance();
@@ -307,34 +296,28 @@ public class Creature extends Cell {
 		}
 
 		if (PApplet.abs(nextOffsetBrightness - currentBrightness) < 0.005f) {
-			nextOffsetBrightness = Configurator
-					.getFloatSetting("CREATURE_ALPHA")
-					- ((Mimodek.bCells.size() < Configurator
-							.getIntegerSetting("CREATURE_DIM_THRESHOLD_INT") ? Configurator
-							.getFloatSetting("CREATURE_ALPHA")
-							: Configurator.getFloatSetting("CREATURE_ALPHA") / 2f)
-							* (float) Math.random() * Configurator
-							.getFloatSetting("CREATURE_ALPHA_VARIATION"));
+			nextOffsetBrightness = Configurator.getFloatSetting("CREATURE_ALPHA")
+					- ((Mimodek.bCells.size() < Configurator.getIntegerSetting("CREATURE_DIM_THRESHOLD_INT") ? Configurator
+							.getFloatSetting("CREATURE_ALPHA") : Configurator.getFloatSetting("CREATURE_ALPHA") / 2f)
+							* (float) Math.random() * Configurator.getFloatSetting("CREATURE_ALPHA_VARIATION"));
 		}
-		currentBrightness += nextOffsetBrightness > currentBrightness ? 0.005f
-				: -0.005f;
+		currentBrightness += nextOffsetBrightness > currentBrightness ? 0.005f : -0.005f;
 
 		// Update velocity
 		vel.add(acc);
 		// Limit speed
-		if(cellB != null && this == cellB.creatureB){
-			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED")* PApplet.min(1f, cellB.creatureA.energy));
-		}else{
-			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED")* PApplet.min(1f, energy));
+		if (cellB != null && this == cellB.creatureB) {
+			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, cellB.creatureA.energy));
+		} else {
+			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, energy));
 		}
 		if (!FacadeFactory.getFacade().isInTheScreen(PVector.add(pos, acc),
 				Configurator.getFloatSetting("CREATURE_SIZE"))) {
-			if(cellB!=null && cellB.moving){
+			if (cellB != null && cellB.moving) {
 				cellB.drop();
 			}
-			seek(new PVector(
-					(float) (Math.random() * FacadeFactory.getFacade().width),
-					(float) Math.random() * FacadeFactory.getFacade().height));
+			seek(new PVector((float) (Math.random() * FacadeFactory.getFacade().width), (float) Math.random()
+					* FacadeFactory.getFacade().height));
 		}
 		pos.add(vel);
 		// Reset accelertion to 0 each cycle
@@ -349,13 +332,11 @@ public class Creature extends Cell {
 	 * @return the p vector
 	 */
 	PVector separate() {
-		float desiredseparation = Configurator
-				.getFloatSetting("CREATURE_DISTANCE_BETWEEN");
+		float desiredseparation = Configurator.getFloatSetting("CREATURE_DISTANCE_BETWEEN");
 		PVector sum = new PVector(0, 0, 0);
 		int count = 0;
 		// For every boid in the system, check if it's too close
-		for (int i = 0; i < Mimodek.creatures.size(); i++) {
-			Creature other = Mimodek.creatures.get(i);
+		for (Creature other : Mimodek.creatures) {
 			float d = pos.dist(other.pos);
 			// If the distance is greater than 0 and less than an arbitrary
 			// amount (0 when you are yourself)
@@ -368,6 +349,7 @@ public class Creature extends Cell {
 				count++; // Keep track of how many
 			}
 		}
+
 		// Average -- divide by how many
 		if (count > 0) {
 			sum.div(count);
@@ -383,28 +365,20 @@ public class Creature extends Cell {
 	 */
 	PVector maintainDistance() {
 		PVector constraint = new PVector(0, 0);
-		if ((this == cellB.creatureA && PApplet.abs(pos
-				.dist(cellB.creatureB.pos)
-				- cellB.getSize()) > 5f)
-				|| (this == cellB.creatureB && PApplet.abs(pos
-						.dist(cellB.creatureA.pos)
-						- cellB.getSize()) > 5f)) {
+		if ((this == cellB.creatureA && PApplet.abs(pos.dist(cellB.creatureB.pos) - cellB.getSize()) > 5f)
+				|| (this == cellB.creatureB && PApplet.abs(pos.dist(cellB.creatureA.pos) - cellB.getSize()) > 5f)) {
 			float a = 0;
 			if (this == cellB.creatureA) {
 				if (pos.dist(cellB.creatureB.pos) - cellB.getSize() > 0) {
-					a = PApplet.atan2(cellB.creatureB.pos.y - pos.y,
-							cellB.creatureB.pos.x - pos.x);
+					a = PApplet.atan2(cellB.creatureB.pos.y - pos.y, cellB.creatureB.pos.x - pos.x);
 				} else {
-					a = PApplet.atan2(pos.y - cellB.creatureB.pos.y, pos.x
-							- cellB.creatureB.pos.x);
+					a = PApplet.atan2(pos.y - cellB.creatureB.pos.y, pos.x - cellB.creatureB.pos.x);
 				}
 			} else {
 				if (pos.dist(cellB.creatureA.pos) - cellB.getSize() > 0) {
-					a = PApplet.atan2(cellB.creatureA.pos.y - pos.y,
-							cellB.creatureA.pos.x - pos.x);
+					a = PApplet.atan2(cellB.creatureA.pos.y - pos.y, cellB.creatureA.pos.x - pos.x);
 				} else {
-					a = PApplet.atan2(pos.y - cellB.creatureA.pos.y, pos.x
-							- cellB.creatureA.pos.x);
+					a = PApplet.atan2(pos.y - cellB.creatureA.pos.y, pos.x - cellB.creatureA.pos.x);
 				}
 			}
 			constraint = new PVector(PApplet.cos(a), PApplet.sin(a));
@@ -416,7 +390,8 @@ public class Creature extends Cell {
 	/**
 	 * Seek.
 	 *
-	 * @param target the target
+	 * @param target
+	 *            the target
 	 */
 	void seek(PVector target) {
 		acc.add(steer(target, false));
@@ -428,8 +403,10 @@ public class Creature extends Cell {
 	/**
 	 * Steer.
 	 *
-	 * @param target the target
-	 * @param slowdown the slowdown
+	 * @param target
+	 *            the target
+	 * @param slowdown
+	 *            the slowdown
 	 * @return the p vector
 	 */
 	PVector steer(PVector target, boolean slowdown) {
@@ -447,15 +424,13 @@ public class Creature extends Cell {
 			// Two options for desired vector magnitude (1 -- based on distance,
 			// 2 -- maxspeed)
 			if ((slowdown) && (d < 100.0))
-				desired.mult(Configurator.getFloatSetting("CREATURE_MAXSPEED")
-						* PApplet.min(1f, energy) * (d / 100.0f)); // This
+				desired.mult(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, energy) * (d / 100.0f)); // This
 			// damping
 			// is
 			// somewhat
 			// arbitrary
 			else
-				desired.mult(Configurator.getFloatSetting("CREATURE_MAXSPEED")
-						* PApplet.min(1f, energy));
+				desired.mult(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, energy));
 			// Steering = Desired minus Velocity
 			steer = PVector.sub(desired, vel);
 			steer.limit(Configurator.getFloatSetting("CREATURE_STEER_FORCE")); // Limit
@@ -464,7 +439,7 @@ public class Creature extends Cell {
 			// steering
 			// force
 		} else {
-			steer = new PVector(0, 0);
+			steer = new PVector(0, 0, 0);
 		}
 		return steer;
 	}
@@ -472,13 +447,13 @@ public class Creature extends Cell {
 	/**
 	 * Smell around.
 	 *
-	 * @param direction the direction
+	 * @param direction
+	 *            the direction
 	 * @return the float
 	 */
 	float smellAround(float direction) {
-		// println("smell");
-		PVector p = Mimodek.scentMap.getSmellInRect(pos.x - 5, pos.y - 5, 10,
-				10);
+
+		PVector p = Mimodek.scentMap.getSmellInRect(pos.x - 5, pos.y - 5, 10, 10);
 
 		if (p != null && p.dist(pos) < 5) {
 			return direction;
@@ -490,17 +465,16 @@ public class Creature extends Cell {
 		return direction;
 	}
 
-
 	/**
 	 * Creates the high lander creature.
 	 *
-	 * @param hL the h l
+	 * @param hL
+	 *            the h l
 	 * @return the creature
 	 */
 	public static Creature createHighLanderCreature(boolean hL) {
 		Cell root = Mimodek.aCells.get(0);
-		Creature c = new Creature(new PVector(root.pos.x
-				+ (-25.0f + (float) Math.random() * 50f), root.pos.y
+		Creature c = new Creature(new PVector(root.pos.x + (-25.0f + (float) Math.random() * 50f), root.pos.y
 				+ (-25.0f + (float) Math.random() * 50f)), hL);
 		Mimodek.creatures.add(c);
 		return c;
@@ -529,7 +503,9 @@ public class Creature extends Cell {
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see MimodekV2.Cell#radius()
 	 */
 	@Override

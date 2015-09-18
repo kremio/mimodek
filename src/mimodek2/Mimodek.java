@@ -59,7 +59,7 @@ public class Mimodek implements TrackingListener {
 	/* JS Console */
 	public JSConsole jsConsole;
 	
-	public static boolean showDepth = true;
+	public static boolean showDepth = false;
 
 	/* Post render hook callback */
 	private static Method callAfterRender;
@@ -373,9 +373,9 @@ public class Mimodek implements TrackingListener {
 		depthBuffer.strokeCap(PApplet.SQUARE);
 
 		depthBuffer.ortho(); // camera
-		depthBuffer.background(0, 0); // clear previous frame
+		depthBuffer.background(0,0); // clear previous frame
 		
-		Navigation.applyTransform(depthBuffer); //set global transform
+		//Navigation.applyTransform(depthBuffer); //set global transform
 		
 		depthBuffer.shader( Renderer.getCellShader() );
 		
@@ -441,18 +441,31 @@ public class Mimodek implements TrackingListener {
 		
 		app.blendMode(PApplet.ADD);
 		
+		//TODO: try rendering in a buffer
 		app.tint(0.5f);
+		//app.shader( Renderer.getLightShader() );
+		depthBuffer.loadPixels();
+		Renderer.setDepthMask(depthBuffer.get(0,0, app.width, app.height));
+		
+		//float radius;
 		for (Creature creature : creatures){
-			
-			app.image(Renderer.creatureTexture, creature.pos.x - 32f, creature.pos.y - 32f, 64f, 64f);
+			Renderer.renderOccludedLight(app.g, creature);
+			/*
+			radius = PApplet.min(32f, creature.pos.z * 32f);
+			//app.text(radius, creature.pos.x,creature.pos.y);
+			if( radius <= 0f)
+				continue;
+			app.image(Renderer.creatureTexture, creature.pos.x - radius, creature.pos.y - radius, radius*2, radius*2);
+			*/
 		}
 		app.noTint();
 		
 		app.blendMode(PApplet.BLEND);
-		
+		/*
 		app.shader( Renderer.getCreatureShader() );
 		for (Creature creature : creatures)
 			Renderer.render(app.g, creature );
+		*/
 		
 		//De-reference
 		leaves.clear();

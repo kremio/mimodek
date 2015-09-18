@@ -40,6 +40,9 @@ import processing.core.PVector;
 public class CellA extends Cell {
 	
 	
+	public static final float MIN_DEPTH = 0.7f;
+	public static final float MAX_DEPTH = 1f + MIN_DEPTH;
+	
 	/** The level. */
 	public int level = 0;
 	
@@ -168,6 +171,10 @@ public class CellA extends Cell {
 		return Configurator.getFloatSetting("CELLA_RADIUS")*radiusModifier;
 	}
 	
+	public float depth(){
+		return ((float)level / (float)maxLevel) + MIN_DEPTH;
+	}
+	
 	/* (non-Javadoc)
 	 * @see MimodekV2.Cell#update(processing.core.PApplet)
 	 */
@@ -180,21 +187,8 @@ public class CellA extends Cell {
 			pos.x = anchor.pos.x + (radius()+anchor.radius())* distanceBetween * PApplet.cos(aa);
 			pos.y = anchor.pos.y + (radius()+anchor.radius())* distanceBetween * PApplet.sin(aa);
 		}
-		/*
-		 * See the big chung of code commented in draw()....
-		 */
-		/*
-		//if a new cell is being created, update it as well
-		if(newCell !=null){
-			newCell.update(app);
-			if(newCell.currentMaturity >= 1f){
-				//the new cell has reached maturity and can be detached from its parent
-				Mimodek.aCells.add(newCell);
-				Mimodek.theCells.add(newCell);
-				newCell = null;
-			}
-		}
-		*/
+		pos.z = depth();
+		
 		if (currentMaturity < maturity)
 			currentMaturity += 0.01;
 	}

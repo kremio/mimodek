@@ -19,6 +19,7 @@ public class Renderer {
 	public static PImage creatureTexture;
 	
 	private static PShader foodShader;
+	private static PShader lightOcclusionShader;
 	
 	public static void setup(PApplet app){
 		cellShader = app.loadShader("glsl/cell_frag.glsl", "glsl/cell_vert.glsl");
@@ -35,6 +36,10 @@ public class Renderer {
 	
 		foodShader = app.loadShader("glsl/food_frag.glsl", "glsl/food_vert.glsl");
 		foodShader.set("sharpness", 0.5f);
+		
+		lightOcclusionShader = app.loadShader("glsl/light_occlusion_frag.glsl","glsl/light_occlusion_vert.glsl");
+		lightOcclusionShader.set("resolution", (float)app.width, (float)app.height);
+		System.out.println("All shaders were loaded.");
 	}
 	
 	/*
@@ -96,6 +101,10 @@ public class Renderer {
 	public static PShader getFoodShader(){
 		return foodShader;
 	}
+	
+	public static PShader getLightShader(){
+		return lightOcclusionShader;
+	}
 
 	//Set the shader's uniforms for each type of cells
 	public static void setUniforms(CellA cellA){
@@ -131,8 +140,7 @@ public class Renderer {
 	}
 	
 	public static void render(PGraphics renderBuffer, CellA cellA, boolean depthPass){
-		float depth = (((float)cellA.level) / ((float)CellA.maxLevel) ) + 0.7f;
-		//depth = PApplet.min(1f, depth);
+		float depth = cellA.depth();
 		
 		renderBuffer.pushStyle();
 		
@@ -168,7 +176,6 @@ public class Renderer {
 	
 	public static void render(PGraphics renderBuffer, CellA cellA) {
 		render(renderBuffer, cellA, false);
-		
 	}
 	
 	public static void renderWithoutShader(PGraphics renderBuffer, CellB cell){
@@ -234,10 +241,10 @@ public class Renderer {
 			}
 			int deadColor = renderBuffer.color(0.8f);
 			c = renderBuffer.lerpColor(cell.color,deadColor,step);
-			cellShader.set("depth", 0.7f);
+			cellShader.set("depth", CellA.MIN_DEPTH);
 		}else{
 			
-			float depth = cell.moving ? 1.7f : (((float)((CellA)anchor).level) / ((float)CellA.maxLevel) ) + 0.7f;
+			float depth = cell.moving ? CellA.MAX_DEPTH : ((CellA)anchor).depth();
 			cellShader.set("depth", depth);
 			c = cell.color;	
 		}
@@ -312,6 +319,23 @@ public class Renderer {
 		//app.strokeWeight(500f /*food.z * Configurator.getFloatSetting("FOOD_SIZE")*/);
 		renderBuffer.point(food.x, food.y);
 		renderBuffer.popStyle();
+	}
+	
+	public static void setDepthMask(PImage depthMask){
+		lightOcclusionShader.set("depthMask", depthMask);
+	}
+	
+	public static void renderOccludedLight(PGraphics renderBuffer, Creature creature){
+		float radius = PApplet.min(32f, creature.pos.z * 32f);
+		//app.text(radius, creature.pos.x,creature.pos.y);
+		if( radius <= 0f)
+			return;
+		lightOcclusionShader.set("lightData", radius, creature.pos.z );
+		lightOcclusionShader.set("lightPosition", creature.pos.x, creature.pos.y);
+		renderBuffer.shader(lightOcclusionShader);
+		renderBuffer.image(Renderer.creatureTexture, creature.pos.x - radius, creature.pos.y - radius, radius*2, radius*2);
+		renderBuffer.resetShader();
+		
 	}
 
 
