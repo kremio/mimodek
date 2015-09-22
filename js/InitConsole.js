@@ -3,8 +3,16 @@ IO = Java.type('mimodek2.serializer.LoaderSaver');
 fps = Java.type('mimodek2.Mimodek').fps;
 Mimodek.setSetting('AUTO_FOOD', true);
 
-showDepth = function(){
-  Java.type('mimodek2.Mimodek').showDepth = !Java.type('mimodek2.Mimodek').showDepth;
+bgColor = function(r,g,b){
+
+  if( g == null && b == null)
+    Java.type('mimodek2.Mimodek').setBgColor(r,r,r);
+  else
+    Java.type('mimodek2.Mimodek').setBgColor(r,g,b);
+}
+
+toggleBg = function(){
+  Java.type('mimodek2.Mimodek').hideBg = !Java.type('mimodek2.Mimodek').hideBg;
 }
 
 help = function(){

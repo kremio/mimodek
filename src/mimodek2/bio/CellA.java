@@ -134,15 +134,8 @@ public class CellA extends Cell {
 		this(pos, new PVector((float) Math.random(), (float) Math.random(),
 				(float) Math.random()));
 		this.radiusModifier = radius;
-		// TODO Auto-generated constructor stub
 	}
 
-	
-	/*
-	public void createNewCell(CellA newCell){
-		this.newCell = newCell;
-	}
-	*/
 	
 	/* (non-Javadoc)
 	 * @see MimodekV2.Cell#setAnchor(MimodekV2.Cell)
@@ -192,8 +185,6 @@ public class CellA extends Cell {
 		if (currentMaturity < maturity)
 			currentMaturity += 0.01;
 	}
-
-
 
 	/**
 	 * Adds the cell a.
@@ -245,8 +236,7 @@ public class CellA extends Cell {
 			}
 			addIt = true;
 
-			for (int i = 0; i < Mimodek.theCells.size(); i++) {
-				Cell toTest = Mimodek.theCells.get(i);
+			for (Cell toTest: Mimodek.theCells) {
 				if (toTest == anchor /*|| (toTest instanceof CellB && ((CellB)toTest).eatable)*/)
 					continue;
 				if (toTest.pos.dist(pos) < (radius*radiusModifier + toTest.radius()*dTo )) {
@@ -254,6 +244,7 @@ public class CellA extends Cell {
 					break;
 				}
 			}
+			
 			if (addIt) {
 				added = new CellA(pos, radiusModifier);
 				added.setAnchor(anchor);
@@ -281,4 +272,54 @@ public class CellA extends Cell {
 		}
 		return added;
 	}
+	
+	public CellA getRootCell() {
+		
+		if(anchor == null || level == 0){
+			return this;
+		}
+		
+		//visit next node
+		return ((CellA)anchor).getRootCell();
+	}
+	
+	public int updateLevel(){
+		if( anchor == null ){
+			return level;
+		}
+		
+		int incLevel = ((CellA)anchor).updateLevel();
+		level += incLevel;
+		
+		if( level == 0 )
+			anchor = null;
+		
+		return incLevel;
+	}
+	
+	/**
+	 * 
+	 * Find the lowest cells and removes them.
+	 * Returns the list of removed cells.
+	 * 
+	 */
+	public static CellA unRootCells(){
+
+		//Find the root cell of a cell picked randomly
+		CellA rootCell = Mimodek.aCells.get( (int) Math.floor( (Math.random()*Mimodek.aCells.size() ) ) ).getRootCell();
+		rootCell.level = -1;
+		
+		//Update the levels
+		float max = 0;
+		for(CellA cellA : Mimodek.aCells){
+			cellA.updateLevel();
+			max = Math.max(cellA.level, max);
+		}
+		
+		CellA.maxLevel = (int)max;
+		
+		return rootCell;
+	}
+
+
 }

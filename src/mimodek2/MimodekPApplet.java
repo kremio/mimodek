@@ -31,12 +31,9 @@ public class MimodekPApplet extends PApplet{
 	}
 
 	public void draw() {
-
-		mimodek.callAfterRender();
-		background(.33f);
+		background(Mimodek.bgColor);
 		mimodek.update();
 		mimodek.draw();
-		
 	}
 	
 	float mouseIntX;

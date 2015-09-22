@@ -52,15 +52,21 @@ public class Mimodek implements TrackingListener {
 	public static LSystem genetics;
 	
 	public static PGraphics renderBuffer;
-	public static PGraphics depthBuffer;
+	public static PGraphics backgroundBuffer;
 	
 	public PImage cellsAPass;
 	
 	/* JS Console */
 	public JSConsole jsConsole;
 	
-	public static boolean showDepth = false;
+	public static float bgColor = 0.33f;
+	
+	public static boolean hideBg = false;
 
+	public static void setBgColor(float r, float g, float b){
+		bgColor = app.color(r,g,b);
+	}
+	
 	/* Post render hook callback */
 	private static Method callAfterRender;
 	private static Object[] callArgumentsAfterRender;
@@ -111,7 +117,7 @@ public class Mimodek implements TrackingListener {
 		FacadeFactory.createFacade(facadeType, app).border = 10f;
 		
 		renderBuffer = app.createGraphics(FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, PApplet.P3D);
-		depthBuffer = app.createGraphics(FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, PApplet.P3D);
+		backgroundBuffer = app.createGraphics(FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, PApplet.P3D);
 		
 		app.textureMode(PApplet.NORMAL);
 		app.colorMode(PApplet.RGB, 1.0f);
@@ -240,6 +246,8 @@ public class Mimodek implements TrackingListener {
 	 */
 	public void update() {
 		
+
+		
 		if ( Configurator.getBooleanSetting("AUTO_FOOD") ) {
 			//randomly add food
 			genetics.addFood();
@@ -270,6 +278,30 @@ public class Mimodek implements TrackingListener {
 				c--;
 			}
 		}
+		
+		/*
+		 * Homeostasis:
+		 * Remove the oldest cells from active rendering
+		 * in order to maintain a satisfying frame rate.
+		 * The removed cells are added to the background.  
+		 * 
+		 */
+		//Wait a few frames to get a more accurate fps reading
+		if(app.frameCount > 100 && app.frameRate < 25f){
+			//Find the cellAs with the lowest level
+			
+			//propagate the change in levels through the structure
+			CellA rootCell = CellA.unRootCells();
+			ArrayList<CellB> rootLeaves = CellB.unRootLeaves();
+			
+			//remove them from the active cells, with their bCells and draw to background
+			drawToBackground( rootCell, rootLeaves );
+			
+			
+			
+			System.out.println("Removed one cell and "+rootLeaves.size()+" leaves.");
+
+		}
 	}
 	
 	public void draw(){
@@ -277,6 +309,7 @@ public class Mimodek implements TrackingListener {
 		float time = app.millis();
 		
 		app.blendMode(PApplet.BLEND);
+		
 		
 		//Init global drawing parameters
 		renderBuffer.beginDraw();
@@ -369,6 +402,9 @@ public class Mimodek implements TrackingListener {
 		app.resetShader();
 		app.pushMatrix();
 		Navigation.applyTransform(app.g);
+		if( !hideBg )
+			//Draw the background
+			app.image(backgroundBuffer,0,0);
 		
 		//Render the dead leaves
 		if(deadLeaves.size() > 0){
@@ -389,6 +425,8 @@ public class Mimodek implements TrackingListener {
 		
 		//Render the living cells
 		app.resetShader();
+		
+		
 		app.image(renderBuffer, 0, 0);
 		
 		
@@ -423,6 +461,56 @@ public class Mimodek implements TrackingListener {
 		
 		//Run callback, if any
 		callAfterRender();
+	}
+	
+	private void drawToBackground(CellA rootCell, ArrayList<CellB> rootLeaves){
+		
+		float time = app.millis();
+		
+		//Init global drawing parameters
+		backgroundBuffer.beginDraw();
+		backgroundBuffer.hint(PApplet.DISABLE_DEPTH_MASK);
+		backgroundBuffer.textureMode(PApplet.NORMAL);
+		backgroundBuffer.colorMode(PApplet.RGB, 1.0f);
+		backgroundBuffer.strokeCap(PApplet.SQUARE);
+		
+		backgroundBuffer.ortho(); //camera
+		backgroundBuffer.noStroke();
+		backgroundBuffer.fill(0,0.0001f);
+		backgroundBuffer.rect(0,0, backgroundBuffer.width, backgroundBuffer.height); //slightly faint previous layer
+		
+		/* Render the stems */
+		if( rootLeaves.size() > 0 ){
+			for (CellB cellB : rootLeaves){
+				//De-reference
+				Mimodek.bCells.remove(cellB);
+				Mimodek.theCells.remove(cellB);
+				Renderer.renderWithoutShader( backgroundBuffer, cellB );
+			}
+		}
+		
+		/* Render the cell */
+		backgroundBuffer.shader( Renderer.getCellShader() );		
+			
+		Renderer.setUniforms(rootCell);
+
+		// De-reference
+		Mimodek.aCells.remove(rootCell);
+		Mimodek.theCells.remove(rootCell);
+
+		Renderer.setTime((time + rootCell.id * 10f) / 1000f * 0.5f);
+		Renderer.render(backgroundBuffer, rootCell);
+				
+		
+		if (rootLeaves.size() > 0){
+			
+			Renderer.setUniforms(rootLeaves.get(0));
+			for (CellB cellB : rootLeaves){
+				Renderer.render(backgroundBuffer, cellB);
+			}
+		}
+		
+		backgroundBuffer.endDraw();
 	}
 	
 	public void callAfterRender() {

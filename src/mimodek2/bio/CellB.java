@@ -21,6 +21,7 @@ package mimodek2.bio;
 
  */
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import mimodek2.*;
@@ -313,6 +314,14 @@ public class CellB extends Cell {
 		return radius() + minDistanceToA + distanceModifier * maxDistanceToA;
 	}
 
+	
+	public boolean isLeafOffCellA(){
+		if(eatable || moving)
+			return false;
+		
+		return anchor instanceof CellA;
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -468,11 +477,30 @@ public class CellB extends Cell {
 	 * @return the eatable cell
 	 */
 	public static CellB getEatableCell() {
-		for (int i = 0; i < Mimodek.bCells.size(); i++) {
-			if (Mimodek.bCells.get(i).eatable)
-				return Mimodek.bCells.get(i);
+		for (CellB cellB : Mimodek.bCells) {
+			if (cellB.eatable)
+				return cellB;
 		}
 		return null;
+	}
+	
+	/**
+	 * IMPORTANT: Call after CellA.unRootCells()
+	 * 
+	 * Find the lowest leaves and removes them.
+	 * Returns the list of removed leaves.
+	 * 
+	 */
+	public static ArrayList<CellB> unRootLeaves(){
+		ArrayList<CellB> rootCells = new ArrayList<CellB>();
+		//Update the levels and collect all root cells
+		for(CellB cellB : Mimodek.bCells){
+			if( cellB.isLeafOffCellA() && ((CellA)cellB.anchor).level < 0 ){
+				rootCells.add(cellB);
+			}
+		}
+		
+		return rootCells;
 	}
 
 }
