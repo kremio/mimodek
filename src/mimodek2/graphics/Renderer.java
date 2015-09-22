@@ -37,8 +37,9 @@ public class Renderer {
 		foodShader = app.loadShader("glsl/food_frag.glsl", "glsl/food_vert.glsl");
 		foodShader.set("sharpness", 0.5f);
 		
-		lightOcclusionShader = app.loadShader("glsl/light_occlusion_frag.glsl","glsl/light_occlusion_vert.glsl");
-		lightOcclusionShader.set("resolution", (float)app.width, (float)app.height);
+		lightOcclusionShader = app.loadShader("glsl/light_occlusion_frag.glsl"/*,"glsl/light_occlusion_vert.glsl"*/);
+		//lightOcclusionShader.set("resolution", (float)app.width, (float)app.height);
+		lightOcclusionShader.set("lightTexture", creatureTexture );
 		System.out.println("All shaders were loaded.");
 	}
 	
@@ -325,17 +326,29 @@ public class Renderer {
 		lightOcclusionShader.set("depthMask", depthMask);
 	}
 	
-	public static void renderOccludedLight(PGraphics renderBuffer, Creature creature){
+	public static void renderLight(PGraphics renderBuffer, Creature creature){
+		float radius = PApplet.min(32f, creature.pos.z * 32f);
+
+		if( radius <= 0f)
+			return;
+
+		renderBuffer.image(creatureTexture, creature.pos.x - radius, creature.pos.y - radius, radius*2, radius*2);
+		
+		
+		
+	}
+	
+	public static void renderLightCircle(PGraphics renderBuffer, Creature creature){
 		float radius = PApplet.min(32f, creature.pos.z * 32f);
 		//app.text(radius, creature.pos.x,creature.pos.y);
 		if( radius <= 0f)
 			return;
-		lightOcclusionShader.set("lightData", radius, creature.pos.z );
-		lightOcclusionShader.set("lightPosition", creature.pos.x, creature.pos.y);
-		renderBuffer.shader(lightOcclusionShader);
-		renderBuffer.image(Renderer.creatureTexture, creature.pos.x - radius, creature.pos.y - radius, radius*2, radius*2);
-		renderBuffer.resetShader();
 		
+		renderBuffer.pushStyle();
+		renderBuffer.noStroke();
+		renderBuffer.fill(creature.pos.z);
+		renderBuffer.ellipse(creature.pos.x, creature.pos.y, 2*radius, 2*radius);
+		renderBuffer.popStyle();
 	}
 
 

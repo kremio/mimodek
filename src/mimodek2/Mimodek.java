@@ -365,44 +365,6 @@ public class Mimodek implements TrackingListener {
 		renderBuffer.endDraw();
 		
 		
-		//Init depth FBO
-		depthBuffer.beginDraw();
-		depthBuffer.hint(PApplet.DISABLE_DEPTH_MASK);
-		depthBuffer.textureMode(PApplet.NORMAL);
-		depthBuffer.colorMode(PApplet.RGB, 1.0f);
-		depthBuffer.strokeCap(PApplet.SQUARE);
-
-		depthBuffer.ortho(); // camera
-		depthBuffer.background(0,0); // clear previous frame
-		
-		//Navigation.applyTransform(depthBuffer); //set global transform
-		
-		depthBuffer.shader( Renderer.getCellShader() );
-		
-		if (aCells.size() > 0) {
-			
-			Renderer.setUniforms(aCells.get(0));
-			
-			for (CellA cellA: aCells){
-				Renderer.setTime( (time+cellA.id*10f)/1000f * 0.5f );
-				Renderer.render(depthBuffer, cellA, true);
-				
-			}
-			
-			if (leaves.size() > 0){
-				
-				Renderer.setUniforms(bCells.get(0));
-				for (CellB cellB : leaves){
-					if( cellB.moving || cellB.eatable )
-						continue;
-					Renderer.render(depthBuffer, cellB, true);
-				}
-			}
-		}
-		
-		depthBuffer.endDraw();
-		
-		
 		/* Compose the final image from the multiple passes */
 		app.resetShader();
 		app.pushMatrix();
@@ -429,9 +391,6 @@ public class Mimodek implements TrackingListener {
 		app.resetShader();
 		app.image(renderBuffer, 0, 0);
 		
-		if( showDepth ){
-			app.image(depthBuffer, 0, 0);
-		}
 		
 		
 		
@@ -443,29 +402,19 @@ public class Mimodek implements TrackingListener {
 		
 		//TODO: try rendering in a buffer
 		app.tint(0.5f);
-		//app.shader( Renderer.getLightShader() );
-		depthBuffer.loadPixels();
-		Renderer.setDepthMask(depthBuffer.get(0,0, app.width, app.height));
-		
-		//float radius;
-		for (Creature creature : creatures){
-			Renderer.renderOccludedLight(app.g, creature);
-			/*
-			radius = PApplet.min(32f, creature.pos.z * 32f);
-			//app.text(radius, creature.pos.x,creature.pos.y);
-			if( radius <= 0f)
-				continue;
-			app.image(Renderer.creatureTexture, creature.pos.x - radius, creature.pos.y - radius, radius*2, radius*2);
-			*/
-		}
+		 
+		app.resetShader();
+
+		for (Creature creature : creatures)
+			Renderer.renderLight(app.g, creature);
+
 		app.noTint();
 		
 		app.blendMode(PApplet.BLEND);
-		/*
+		
 		app.shader( Renderer.getCreatureShader() );
 		for (Creature creature : creatures)
 			Renderer.render(app.g, creature );
-		*/
 		
 		//De-reference
 		leaves.clear();
