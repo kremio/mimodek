@@ -38,7 +38,7 @@ import processing.core.PVector;
 /**
  * The Class CellB.
  */
-public class CellB extends Cell {
+public class Leaf extends Cell {
 
 	/** The use pollution data. */
 	public static boolean usePollutionData = true;
@@ -68,12 +68,12 @@ public class CellB extends Cell {
 	public boolean moving = false;
 
 	/** The eatable. */
-	public boolean eatable = false;
+	public boolean edible = false;
 
 	/** The creature b. */
-	public Creature creatureA;
+	public Lightie creatureA;
 
-	public Creature creatureB;
+	public Lightie creatureB;
 
 	/** The drop me at a. */
 	PVector dropMeAtA;
@@ -95,7 +95,7 @@ public class CellB extends Cell {
 		state.put("nextOffsetBrightness", nextOffsetBrightness);
 		state.put("distanceModifier", distanceModifier);
 		state.put("moving", moving);
-		state.put("eatable", eatable);
+		state.put("eatable", edible);
 		state.put("color", color);
 
 		if (creatureA != null)
@@ -114,7 +114,7 @@ public class CellB extends Cell {
 			state.put("dropMeAtBY", dropMeAtB.y);
 		}
 
-		if (!moving && eatable && anchor != null) {
+		if (!moving && edible && anchor != null) {
 			state.remove("anchor");
 			state.put("dropX", anchor.pos.x);
 			state.put("dropY", anchor.pos.y);
@@ -158,7 +158,7 @@ public class CellB extends Cell {
 
 	public static void createShape(PGraphics renderBuffer, PImage texture) {
 
-		CellB.texture = texture;
+		Leaf.texture = texture;
 		PShape pshape = renderBuffer.createShape();
 		pshape.beginShape();
 		pshape.noStroke();
@@ -170,7 +170,7 @@ public class CellB extends Cell {
 		pshape.endShape(PApplet.CLOSE);
 		pshape.setTexture(texture);
 
-		CellB.shape = pshape;
+		Leaf.shape = pshape;
 
 	}
 
@@ -182,16 +182,16 @@ public class CellB extends Cell {
 	 * @param distanceModifier
 	 *            the distance modifier
 	 */
-	public CellB(PVector pos, float distanceModifier) {
+	public Leaf(PVector pos, float distanceModifier) {
 		super(pos);
 		this.distanceModifier = distanceModifier;
 	}
 
 	/**
-	 * Sets the eatable.
+	 * Make the leaf edible
 	 */
-	public void setEatable() {
-		if (!eatable && currentMaturity >= 1f && creatureA == null && creatureB == null) {
+	public void makeEdible() {
+		if (!edible && currentMaturity >= 1f && creatureA == null && creatureB == null) {
 			call2Creatures();
 		}
 	}
@@ -225,19 +225,19 @@ public class CellB extends Cell {
 	void call2Creatures() {
 		int count = 0;
 		// one from the existing ones
-		int indA = PApplet.round((float) Math.random() * (Mimodek.creatures.size() - 1));
-		while (Mimodek.creatures.get(indA).cellB != null && count < 50) {
+		int indA = PApplet.round((float) Math.random() * (Mimodek.lighties.size() - 1));
+		while (Mimodek.lighties.get(indA).cellB != null && count < 50) {
 			count++;
-			indA = PApplet.round((float) Math.random() * (Mimodek.creatures.size() - 1));
+			indA = PApplet.round((float) Math.random() * (Mimodek.lighties.size() - 1));
 		}
 		if (count >= 50)
 			return;
 
-		creatureA = Mimodek.creatures.get(indA);
+		creatureA = Mimodek.lighties.get(indA);
 		creatureA.cellB = this;
 
 		// and an fresh new one
-		creatureB = Creature.createCreature();
+		creatureB = Lightie.spawn();
 		creatureB.cellB = this;
 	}
 
@@ -246,7 +246,7 @@ public class CellB extends Cell {
 	 */
 	void drop() {
 		moving = false;
-		eatable = true;
+		edible = true;
 		pos = new PVector(creatureA.pos.x, creatureA.pos.y);
 		setAnchor(new Cell(new PVector(creatureB.pos.x, creatureB.pos.y)));
 		creatureA.cellB = null;
@@ -264,7 +264,7 @@ public class CellB extends Cell {
 	 *            the c
 	 * @return the creature target position
 	 */
-	PVector getCreatureTargetPosition(Creature c) {
+	PVector getCreatureTargetPosition(Lightie c) {
 		if (creatureA == null || creatureB == null)
 			return null;
 		
@@ -316,7 +316,7 @@ public class CellB extends Cell {
 
 	
 	public boolean isLeafOffCellA(){
-		if(eatable || moving)
+		if(edible || moving)
 			return false;
 		
 		return anchor instanceof CellA;
@@ -331,11 +331,11 @@ public class CellB extends Cell {
 	public void update(PApplet app) {
 		float minDistanceToA = Configurator.getFloatSetting("CELLB_MIN_DISTANCE_TO_A");
 		float maxDistanceToA = Configurator.getFloatSetting("CELLB_MAX_DISTANCE_TO_A") - minDistanceToA;
-		if (eatable) {
+		if (edible) {
 			maturity -= 0.001f;
 			if (maturity <= 0f) {
-				Mimodek.bCells.remove(this);
-				Mimodek.theCells.remove(this);
+				Mimodek.leavesCells.remove(this);
+				Mimodek.allCells.remove(this);
 				return;
 			}
 		} else {
@@ -348,9 +348,9 @@ public class CellB extends Cell {
 			}
 		}
 
-		if (creatureA == null && creatureB == null && !eatable) {
-			for (int c = 0; c < Mimodek.creatures.size(); c++) {
-				Creature cr = Mimodek.creatures.get(c);
+		if (creatureA == null && creatureB == null && !edible) {
+			for (int c = 0; c < Mimodek.lighties.size(); c++) {
+				Lightie cr = Mimodek.lighties.get(c);
 				if (cr.pos.dist(pos) < 20) {
 
 					if (PApplet.abs(currentAngle - nextOffsetAngle) < (PConstants.PI / 180.0f)) {
@@ -378,7 +378,7 @@ public class CellB extends Cell {
 		 * (radius()+minDistanceToA+distanceModifier*maxDistanceToA); }
 		 */
 
-		if (!eatable) {
+		if (!edible) {
 			if (!usePollutionData) {
 				color = TemperatureColorRanges.getColor(TemperatureColorRanges
 						.getHigherTemperature(temperatureInterpolator.getInterpolatedValue()));
@@ -402,73 +402,81 @@ public class CellB extends Cell {
 	}
 
 	/**
-	 * Adds the cell b.
+	 * Try to add a new leaf to the structure.
+	 * The algorithm will randomly calculate a position for the new leaf
+	 * based on a randomly picked anchor cell.
+	 * It will then test if the new leaf would appear inside the frame or overlap with an existing cell.
+	 * The number of times the algorithm is allowed to run before failing is controlled
+	 * by the "CELLB_MAX_TRY_INT" Configurator setting.
 	 *
-	 * @param app
-	 *            the app
-	 * @return the cell b
+	 * 
+	 * @return the new newly created cell or null if all attempts failed.
 	 */
-	public static CellB addCellB(PApplet app) {
+	public static Leaf addCellB() {
 		float cellA_radius = Configurator.getFloatSetting("CELLA_RADIUS");
 		float cellB_radius = Configurator.getFloatSetting("CELLB_RADIUS");
 		float minDistanceToA = Configurator.getFloatSetting("CELLB_MIN_DISTANCE_TO_A");
 		float maxDistanceToA = Configurator.getFloatSetting("CELLB_MAX_DISTANCE_TO_A") - minDistanceToA;
 
-		CellB added = null;
-		int counter = 0;
+		Leaf newCell = null;
 
-		CellA anchor = Mimodek.aCells.get(PApplet.round((float) Math.random() * (Mimodek.aCells.size() - 1)));
-		float a = (float) Math.random() * (PConstants.TWO_PI);
-		float distanceModifier = (float) Math.random();
-		// (20);
-		PVector pos = new PVector(anchor.pos.x + PApplet.cos(a)
-				* (cellA_radius + cellB_radius + minDistanceToA + distanceModifier * maxDistanceToA), anchor.pos.y
-				+ PApplet.sin(a) * (cellA_radius + cellB_radius + minDistanceToA + distanceModifier * maxDistanceToA));
+		// Which cell to attach the new leaf to
+		CellA anchor;
+		// Angle of attachment to the anchor
+		float a;
+		// Factor to the default distance between leaf and anchor cell
+		float distanceModifier;
+
+		// position of the new leaf
+		PVector pos;
+
+		// True if the new leaf passes all the validation steps
 		boolean addIt = false;
-		while (!addIt && counter < 50) {
+
+		// Count the number of loop iterations
+		int counter = 0;
+		int maxTry = Configurator.getIntegerSetting("CELLB_MAX_TRY_INT");
+
+		do {
+			counter++;
+			anchor = CellA.getRandomCell();
+			a = (float) Math.random() * (PConstants.TWO_PI);
+			distanceModifier = (float) Math.random();
+
+			pos = new PVector(anchor.pos.x + PApplet.cos(a)
+					* (cellA_radius + cellB_radius + minDistanceToA + distanceModifier * maxDistanceToA), anchor.pos.y
+					+ PApplet.sin(a)
+					* (cellA_radius + cellB_radius + minDistanceToA + distanceModifier * maxDistanceToA));
+
+			// If the new leaf inside the frame
 			if (!FacadeFactory.getFacade().isInTheScreen(pos, cellB_radius)) {
-				anchor = Mimodek.aCells.get(PApplet.round((float) Math.random() * (Mimodek.aCells.size() - 1)));
-				a = (float) Math.random() * (PConstants.TWO_PI);
-				distanceModifier = (float) Math.random();
-				pos = new PVector(anchor.pos.x + PApplet.cos(a)
-						* (cellA_radius + cellB_radius + minDistanceToA + distanceModifier * maxDistanceToA),
-						anchor.pos.y + PApplet.sin(a)
-								* (cellA_radius + cellB_radius + minDistanceToA + distanceModifier * maxDistanceToA));
+				// Try again!
 				continue;
 			}
+
 			addIt = true;
 
-			for (int i = 0; i < Mimodek.theCells.size(); i++) {
-				Cell toTest = Mimodek.theCells.get(i);
-				/*
-				 * if((toTest instanceof CellB && ((CellB)toTest).eatable)) continue;
-				 */
+			for (Cell toTest : Mimodek.allCells) {
+
 				if (toTest.pos.dist(pos) < (cellB_radius + toTest.radius())
-						+ ((toTest instanceof CellB) ? 0 : minDistanceToA)) { // 3:7
-					// println((cellA_radius+toTest.radius));
+						+ ((toTest instanceof Leaf) ? 0 : minDistanceToA)) { // 3:7
 					addIt = false;
 					break;
 				}
 			}
-			if (addIt) {
-				added = new CellB(pos, distanceModifier);
-				added.setAnchor(anchor);
-			} else {
-				anchor = Mimodek.aCells.get(PApplet.round((float) Math.random() * (Mimodek.aCells.size() - 1)));
-				a = (float) Math.random() * (PConstants.TWO_PI);
-				distanceModifier = (float) Math.random();
-				pos = new PVector(anchor.pos.x + PApplet.cos(a)
-						* (cellA_radius + cellB_radius + minDistanceToA + distanceModifier * maxDistanceToA),
-						anchor.pos.y + PApplet.sin(a)
-								* (cellA_radius + cellB_radius + minDistanceToA + distanceModifier * maxDistanceToA));
+
+			if (!addIt) {
+				// Try again!
+				continue;
 			}
-			counter++;
-		}
-		if (counter >= 50) {
-			return null;
-		}
-		// println(added.pos);
-		return added;
+
+			newCell = new Leaf(pos, distanceModifier);
+			newCell.setAnchor(anchor);
+
+		} while (newCell == null && counter < maxTry);
+
+		return newCell;
+
 	}
 
 	/**
@@ -476,9 +484,9 @@ public class CellB extends Cell {
 	 *
 	 * @return the eatable cell
 	 */
-	public static CellB getEatableCell() {
-		for (CellB cellB : Mimodek.bCells) {
-			if (cellB.eatable)
+	public static Leaf getEatableCell() {
+		for (Leaf cellB : Mimodek.leavesCells) {
+			if (cellB.edible)
 				return cellB;
 		}
 		return null;
@@ -491,10 +499,10 @@ public class CellB extends Cell {
 	 * Returns the list of removed leaves.
 	 * 
 	 */
-	public static ArrayList<CellB> unRootLeaves(){
-		ArrayList<CellB> rootCells = new ArrayList<CellB>();
+	public static ArrayList<Leaf> unRootLeaves(){
+		ArrayList<Leaf> rootCells = new ArrayList<Leaf>();
 		//Update the levels and collect all root cells
-		for(CellB cellB : Mimodek.bCells){
+		for(Leaf cellB : Mimodek.leavesCells){
 			if( cellB.isLeafOffCellA() && ((CellA)cellB.anchor).level < 0 ){
 				rootCells.add(cellB);
 			}

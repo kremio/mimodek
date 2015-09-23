@@ -186,96 +186,128 @@ public class CellA extends Cell {
 			currentMaturity += 0.01;
 	}
 
+	public static CellA getRandomCell(){
+		return Mimodek.aCells.get( (int)Math.floor(Math.random() * Mimodek.aCells.size() ) );
+	}
+	
 	/**
-	 * Adds the cell a.
+	 * Try to add a new cell to the structure.
+	 * The algorithm will randomly calculate a position for the new cell
+	 * based on a randomly picked anchor cell.
+	 * It will then test if the new cell would appear inside the frame or overlap with an existing cell.
+	 * The number of times the algorithm is allowed to run before failing is controlled
+	 * by the "CELLA_MAX_TRY_INT" Configurator setting.
 	 *
-	 * @param app the app
-	 * @return the cell a
+	 * 
+	 * @return the new newly created cell or null if all attempts failed.
 	 */
-	public static CellA addCellA(PApplet app) {
+	public static CellA addCellA() {
+		/*
+		 * Controls the distance between a cell and its anchor.
+		 * The value is factor of the anchor's radius.
+		 * 0: new cell and anchor overlap
+		 * 1: new cell sits one anchor radius away from the anchor
+		 */
 		float dTo = 0.75f;//0.42f+(humidityInterpolator.getInterpolatedValue()/100f)*(0.75f-0.42f);
 		//float dTo = Configurator.getFloatSetting("CELLA_DISTANCE_BETWEEN");
-		float radius = Configurator.getFloatSetting("CELLA_RADIUS");
-		Cell root = Mimodek.aCells.get(0);
-		float maxD = root.pos.dist(new PVector(0, 0));
 		
-		int counter = 0;
-
-		CellA added = null;
-		//System.out.println("Pick a random aCell:"+PApplet.round((float)Math.random() * (Mimodek.aCells.size() - 1)));
-		CellA anchor = Mimodek.aCells.get(PApplet.round((float)Math.random() * (Mimodek.aCells.size() - 1)));
-		float a = (float) Math.random() * PConstants.TWO_PI;
-		PVector pos = new PVector(anchor.pos.x + PApplet.cos(a) * anchor.radius()
-				* dTo, anchor.pos.y + PApplet.sin(a) * anchor.radius() * dTo);
+		//Radius of the new cell
+		float radius = Configurator.getFloatSetting("CELLA_RADIUS");
+		
+		/*
+		 * Modify the radius (and thus the position) of the new cell based on
+		 * its distance to the root cell.
+		 * The farther the smaller.
+		 */
+		float radiusModifier = 1f;
+		
+		CellA newCell = null;
+		
+		//The cell the new cell will be anchored to 
+		CellA anchor;
+		
+		//Root cell, used to modulate the size of the cells
+		CellA root;
+		
+		//Distance of the root cell from the origin
+		float maxD;
+		
+		//The angle of attachment to the anchor
+		float a;
+		
+		//The position of the new cell
+		PVector pos;
+		
+		//True if the new cell passes all the validation steps
 		boolean addIt = false;
 		
-		float radiusModifier = 1f;
-		if (Mimodek.aCells.size() > 0) {
-
+		//Count the number of loop iterations
+		int counter = 0;
+		int maxTry = Configurator.getIntegerSetting("CELLA_MAX_TRY_INT");
+		
+		do{
+			counter++;
+			
+			//Pick a random cell 
+			anchor = getRandomCell();
+			
+			//Root cell, used to modulate the size of the cells
+			root = anchor.getRootCell();
+			
+			//Distance of the root cell from the origin
+			maxD = root.pos.dist(new PVector(0, 0));
+			
+			//Randomly choose the angle of attachment
+			a = (float) Math.random() * PConstants.TWO_PI;
+			
+			pos = new PVector(anchor.pos.x + PApplet.cos(a)
+					* anchor.radius() * dTo, anchor.pos.y + PApplet.sin(a)
+					* anchor.radius() * dTo);
+			
+			//Modify the radius of the new cell based on its distance from the root
 			radiusModifier = (maxD - pos.dist(root.pos)) / maxD;
+			
+			//The position of the new cell
 			pos = new PVector(anchor.pos.x + PApplet.cos(a)
 					* (anchor.radius() + radius*radiusModifier)* dTo, anchor.pos.y + PApplet.sin(a)
 					* (anchor.radius() + radius*radiusModifier)* dTo);
-		}
-		while (!addIt && counter < Configurator.getIntegerSetting("CELLA_MAX_TRY_INT")) {
+			
+			//Will the new cell be inside the frame ?
 			if (!FacadeFactory.getFacade().isInTheScreen(pos, radius*radiusModifier)) {
-				anchor = Mimodek.aCells.get(PApplet.round((float)Math.random() * (Mimodek.aCells.size() - 1)));
-				a = (float) Math.random() * PConstants.TWO_PI;
-				pos = new PVector(anchor.pos.x + PApplet.cos(a) * anchor.radius()
-						* dTo, anchor.pos.y + PApplet.sin(a) * anchor.radius()
-						* dTo);
-				//radius = Mimodek.CELLA_RADIUS;
-				if (Mimodek.aCells.size() > 0) {
-
-					radiusModifier = (maxD - pos.dist(root.pos)) / maxD;
-					pos = new PVector(anchor.pos.x + PApplet.cos(a)
-							* (anchor.radius() + radius*radiusModifier), anchor.pos.y
-							+ PApplet.sin(a) * (anchor.radius() + radius*radiusModifier));
-				}
+				//try again!
 				continue;
 			}
+			
 			addIt = true;
-
-			for (Cell toTest: Mimodek.theCells) {
+			//Will the new cell overlap with an existing cell?
+			for (Cell toTest: Mimodek.allCells) {
+				//Don't include the anchor in the test
 				if (toTest == anchor /*|| (toTest instanceof CellB && ((CellB)toTest).eatable)*/)
 					continue;
+				
 				if (toTest.pos.dist(pos) < (radius*radiusModifier + toTest.radius()*dTo )) {
 					addIt = false;
 					break;
 				}
 			}
 			
-			if (addIt) {
-				added = new CellA(pos, radiusModifier);
-				added.setAnchor(anchor);
-				//TODO:Remove if new animation doesn't work
-				//anchor.createNewCell(added);
-			} else {
-				anchor = Mimodek.aCells.get(PApplet.round((float)Math.random() * (Mimodek.aCells.size() - 1)));
-				a = (float) Math.random() * PConstants.TWO_PI;
-				pos = new PVector(anchor.pos.x + PApplet.cos(a) * anchor.radius()
-						* dTo, anchor.pos.y + PApplet.sin(a) * anchor.radius()
-						* dTo);
-				//radius = Mimodek.CELLA_RADIUS;
-				if (Mimodek.aCells.size() > 0) {
-
-					radiusModifier = (maxD - pos.dist(root.pos)) / maxD;
-					pos = new PVector(anchor.pos.x + PApplet.cos(a)
-							* (anchor.radius() + radius*radiusModifier)*dTo, anchor.pos.y
-							+ PApplet.sin(a) * (anchor.radius() + radius*radiusModifier)*dTo);
-				}
+			if(!addIt){
+				//try again!
+				continue;
 			}
-			counter++;
-		}
-		if (counter >= Configurator.getIntegerSetting("CELLA_MAX_TRY_INT")) {
-			return null;
-		}
-		return added;
+			
+			newCell = new CellA(pos, radiusModifier);
+			newCell.setAnchor(anchor);
+			
+		}while(newCell == null && counter < maxTry);
+		
+		
+		return newCell;
 	}
 	
 	public CellA getRootCell() {
 		
-		if(anchor == null || level == 0){
+		if(anchor == null){
 			return this;
 		}
 		

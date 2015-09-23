@@ -20,7 +20,7 @@ public class State implements Serializable {
 	HashMap<String, Object> lSystem;
 	ArrayList< Long > growingCells;
 	
-	public State(ArrayList<CellA> aCells, ArrayList<CellB> bCells, ArrayList<Creature> creatures, ArrayList<Cell> growingCells, LSystem lSystem){
+	public State(ArrayList<CellA> aCells, ArrayList<Leaf> bCells, ArrayList<Lightie> creatures, ArrayList<Cell> growingCells, LSystem lSystem){
 		
 		//Get the state of all cells of type A
 		cells_A = new ArrayList< HashMap<String, Object> >(aCells.size());
@@ -30,13 +30,13 @@ public class State implements Serializable {
 		
 		//Get the state of all cells of type B
 		cells_B = new ArrayList< HashMap<String, Object> >(bCells.size());
-		for(CellB bCell : bCells){
+		for(Leaf bCell : bCells){
 			cells_B.add( bCell.getState() );
 		}
 		
 		//Get the state of all creatures
 		this.creatures = new ArrayList<HashMap<String, Object>>(creatures.size());
-		for (Creature creature : creatures) {
+		for (Lightie creature : creatures) {
 			this.creatures.add(creature.getState());
 		}
 		

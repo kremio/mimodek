@@ -32,7 +32,7 @@ import processing.core.PVector;
 /**
  * The Class Creature.
  */
-public class Creature extends Cell {
+public class Lightie extends Cell {
 
 	/** The vel. */
 	public PVector vel;
@@ -50,7 +50,7 @@ public class Creature extends Cell {
 	public int workCounter = 0;
 
 	/** The cell b. */
-	public CellB cellB;
+	public Leaf cellB;
 
 	/** The high lander. */
 	public boolean highLander = false;
@@ -132,7 +132,7 @@ public class Creature extends Cell {
 	 * @param highLander
 	 *            the high lander
 	 */
-	public Creature(PVector pos, boolean highLander) {
+	public Lightie(PVector pos, boolean highLander) {
 		this(pos);
 		this.highLander = highLander;
 	}
@@ -143,7 +143,7 @@ public class Creature extends Cell {
 	 * @param pos
 	 *            the pos
 	 */
-	public Creature(PVector pos) {
+	public Lightie(PVector pos) {
 		super(pos);
 		this.pos = pos;
 		this.pos.z = CellA.MIN_DEPTH;
@@ -160,7 +160,7 @@ public class Creature extends Cell {
 	public void update() {
 		long timeSinceUpdate = System.currentTimeMillis() - lastUpdate;
 		// deplete energy every 2 seconds (2000 millis)
-		if (cellB == null || cellB.eatable)
+		if (cellB == null || cellB.edible)
 			energy -= (timeSinceUpdate / 2000f) * 0.03f;
 		if (highLander && energy < 0.5f) {
 			energy = 0.4f;
@@ -187,11 +187,11 @@ public class Creature extends Cell {
 		} else {
 			// when energy is half full, seek for cell B to eat
 			if (energy < 0.5f && cellB == null) {
-				cellB = CellB.getEatableCell();
+				cellB = Leaf.getEatableCell();
 			}
 
 			if (cellB != null) { // Found something to eat
-				if (cellB.eatable) {
+				if (cellB.edible) {
 					// go move a b cell
 					if (cellB.pos.dist(pos) < 5f) {
 						// eat
@@ -297,7 +297,7 @@ public class Creature extends Cell {
 
 		if (PApplet.abs(nextOffsetBrightness - currentBrightness) < 0.005f) {
 			nextOffsetBrightness = Configurator.getFloatSetting("CREATURE_ALPHA")
-					- ((Mimodek.bCells.size() < Configurator.getIntegerSetting("CREATURE_DIM_THRESHOLD_INT") ? Configurator
+					- ((Mimodek.leavesCells.size() < Configurator.getIntegerSetting("CREATURE_DIM_THRESHOLD_INT") ? Configurator
 							.getFloatSetting("CREATURE_ALPHA") : Configurator.getFloatSetting("CREATURE_ALPHA") / 2f)
 							* (float) Math.random() * Configurator.getFloatSetting("CREATURE_ALPHA_VARIATION"));
 		}
@@ -336,7 +336,7 @@ public class Creature extends Cell {
 		PVector sum = new PVector(0, 0, 0);
 		int count = 0;
 		// For every boid in the system, check if it's too close
-		for (Creature other : Mimodek.creatures) {
+		for (Lightie other : Mimodek.lighties) {
 			float d = pos.dist(other.pos);
 			// If the distance is greater than 0 and less than an arbitrary
 			// amount (0 when you are yourself)
@@ -472,11 +472,11 @@ public class Creature extends Cell {
 	 *            the h l
 	 * @return the creature
 	 */
-	public static Creature createHighLanderCreature(boolean hL) {
+	public static Lightie createHighLander(boolean hL) {
 		Cell root = Mimodek.aCells.get(0);
-		Creature c = new Creature(new PVector(root.pos.x + (-25.0f + (float) Math.random() * 50f), root.pos.y
+		Lightie c = new Lightie(new PVector(root.pos.x + (-25.0f + (float) Math.random() * 50f), root.pos.y
 				+ (-25.0f + (float) Math.random() * 50f)), hL);
-		Mimodek.creatures.add(c);
+		Mimodek.lighties.add(c);
 		return c;
 	}
 
@@ -485,18 +485,18 @@ public class Creature extends Cell {
 	 *
 	 * @return the creature
 	 */
-	public static Creature createCreature() {
-		return createHighLanderCreature(false);
+	public static Lightie spawn() {
+		return createHighLander(false);
 	}
 
 	/**
 	 * Go eat some soft cell.
 	 */
-	public static void goEatSomeSoftCell() {
-		Creature c = Mimodek.creatures.get(0);
+	public static void goEatALeaf() {
+		Lightie c = Mimodek.lighties.get(0);
 		int i = 1;
-		while (c.hasFood && i < Mimodek.creatures.size()) {
-			c = Mimodek.creatures.get(i++);
+		while (c.hasFood && i < Mimodek.lighties.size()) {
+			c = Mimodek.lighties.get(i++);
 		}
 		if (!c.hasFood) {
 			c.workCounter = 10;

@@ -146,7 +146,7 @@ public class Configurator {
 		/*
 		 * Hard cell settings
 		 */
-		Configurator.setSetting("CELLA_MAX_TRY_INT",50,"How many times the organism should try to find space for a new hardcell. High values might stop the animation alltogether");
+		Configurator.setSetting("CELLA_MAX_TRY_INT",50,"How many times the organism should try to find space for a new hardcell. WARNING: High values might stop the animation alltogether");
 		Configurator.setSetting("CELLA_DISTORTION",0.5f,"Range between 0f and 1f. Controls the distortion of the circle that makes the shape of the hard cells.");
 		Configurator.setSetting("CELLA_DISTANCE_BETWEEN",0.5f,"Range between 0f and 1f. Controls of far appart the hard cells should be of each others. 0f means that they all share the same center, 1f and the distance between them is the sum of their radius.");
 		Configurator.setSetting("CELLA_RADIUS",10f,"The maximum radius of hard cells, that is to say the radiu of the seed.");
@@ -158,6 +158,7 @@ public class Configurator {
 		/*
 		 * Soft cell settings
 		 */
+		Configurator.setSetting("CELLB_MAX_TRY_INT",50,"How many times the organism should try to find space for a new softcell. WARNING: High values might stop the animation alltogether");
 		Configurator.setSetting("CELLB_RADIUS",10f,"The maximum radius of the soft cells.");
 		Configurator.setSetting("CELLB_R",0f,"Range between 0f and 1f. The red component of the soft cells color.");
 		Configurator.setSetting("CELLB_G",0f,"Range between 0f and 1f. The green component of the soft cells color.");

@@ -67,68 +67,67 @@ public class LSystem implements StatefulObject{
 	/**
 	 * Command a.
 	 *
-	 * @return the int
+	 * @return 1 if a cell A was added, -1 if a cell A could not be added, 0 if nothing happened
 	 */
 	private int commandA() {
-		float ratio = Mimodek.aCells.size() > 0 ? (float) Mimodek.bCells.size()
+		float ratio = Mimodek.aCells.size() > 0 ? (float) Mimodek.leavesCells.size()
 				/ (float) Mimodek.aCells.size() : 0f;
-		//System.out.println(ratio);
-		if (ratio >= 1.25f) {
-			CellA nuC = CellA.addCellA(app);
-			//TODO: Un-comment if new animation doesn't work
-			if (nuC != null) {
-				Mimodek.growingCells.add(nuC);
-				Mimodek.aCells.add(nuC);
-				Mimodek.theCells.add(nuC);
-			} else {
-				for (int i = 0; i < Mimodek.bCells.size(); i++) {
-					// make one bCell eatable
-					if (!Mimodek.bCells.get(i).eatable
-							&& Mimodek.bCells.get(i).currentMaturity >= 1f
-							&& Mimodek.bCells.get(i).creatureA == null
-							&& Mimodek.bCells.get(i).creatureB == null) {
-						Mimodek.bCells.get(i).setEatable();
-						break;
-					}
-				}
-				return -1;
-			}
-			return 1;
-		} else {
+		
+		if (ratio < 1.25f) {
 			return 0;
 		}
+			
+		// Try to create a new Cell A
+		CellA nuC = CellA.addCellA();
+
+		if (nuC != null) {
+			Mimodek.growingCells.add(nuC);
+			Mimodek.aCells.add(nuC);
+			Mimodek.allCells.add(nuC);
+			return 1;
+		}
+
+		// make one bCell edible
+		for (Leaf cellB : Mimodek.leavesCells) {
+			if (!cellB.edible && cellB.currentMaturity >= 1f && cellB.creatureA == null && cellB.creatureB == null) {
+				cellB.makeEdible();
+				break;
+			}
+		}
+		return -1;
 	}
 
 	/**
 	 * Command b.
 	 */
 	private void commandB() {
-		CellB nuC = CellB.addCellB(app);
+		Leaf nuC = Leaf.addCellB();
+		
 		if (nuC != null) {
 			Mimodek.growingCells.add(nuC);
-			Mimodek.bCells.add(nuC);
-			Mimodek.theCells.add(nuC);
+			Mimodek.leavesCells.add(nuC);
+			Mimodek.allCells.add(nuC);
 			createEatableCounter++;
 			// TODO: arbitrary values
 			if (createEatableCounter == 3) {
-				nuC.setEatable();
+				nuC.makeEdible();
 				createEatableCounter = 0;
 			}
-		} else {
-			float ratio = Mimodek.aCells.size() > 0 ? (float) Mimodek.bCells
-					.size()
-					/ (float) Mimodek.aCells.size() : 0f;
-			if (ratio >= 1.5f) {
-				for (int i = 0; i < Mimodek.bCells.size(); i++) {
-					// make one bCell eatable
-					if (!Mimodek.bCells.get(i).eatable
-							&& Mimodek.bCells.get(i).currentMaturity >= 1f
-							&& Mimodek.bCells.get(i).creatureA == null
-							&& Mimodek.bCells.get(i).creatureB == null) {
-						Mimodek.bCells.get(i).setEatable();
-						break;
-					}
-				}
+			return;
+		}
+		
+		float ratio = Mimodek.aCells.size() > 0 ? (float) Mimodek.leavesCells.size() / (float) Mimodek.aCells.size() : 0f;
+		if (ratio < 1.5f) {
+			return;
+		}
+		
+		// make one bCell edible
+		for (Leaf cellB : Mimodek.leavesCells) {
+			
+			if (!cellB.edible && cellB.currentMaturity >= 1f
+					&& cellB.creatureA == null && cellB.creatureB == null) {
+				cellB.makeEdible();
+				break;
 			}
 		}
 	}
@@ -137,24 +136,26 @@ public class LSystem implements StatefulObject{
 	 * Regenerate.
 	 */
 	private void regenerate() {
+		commandIndex = 0;
 		if (commandStr.length() >= 256) {
 			commandStr = "ab";
-		} else {
-			StringBuilder nuCmd = new StringBuilder();  //More effective when constructing strings in loops
-			for (int i = 0; i < commandStr.length(); i++) {
-				char c = commandStr.charAt(i);
-				switch (c) {
-				case 'a':
-					nuCmd.append(Math.random() >= 0.5 ? "b" : "ab");
-					break;
-				case 'b':
-					nuCmd.append(Math.random() >= 0.5 ? "aa" : "ab");
-					break;
-				}
-			}
-			commandStr = nuCmd.toString();
+			return;
 		}
-		commandIndex = 0;
+
+		StringBuilder nuCmd = new StringBuilder(); // More effective when constructing strings in loops
+		for (int i = 0; i < commandStr.length(); i++) {
+			char c = commandStr.charAt(i);
+			switch (c) {
+			case 'a':
+				nuCmd.append(Math.random() >= 0.5 ? "b" : "ab");
+				break;
+			case 'b':
+				nuCmd.append(Math.random() >= 0.5 ? "aa" : "ab");
+				break;
+			}
+		}
+		commandStr = nuCmd.toString();
+		
 	}
 
 	/**
@@ -164,9 +165,11 @@ public class LSystem implements StatefulObject{
 		long elapsedTime = System.currentTimeMillis() - timeSinceLastFood;
 		// if it has been more than 5 seconds, create a creature
 		if (elapsedTime > 5 * 1000) {
-			Creature.createCreature();
+			Lightie.spawn();
 		}
 		timeSinceLastFood = System.currentTimeMillis();
+		
+		//Further the growth of an immature cell
 		if (Mimodek.growingCells.size() > 0) {
 			Cell cell = Mimodek.growingCells.get((int) (float) Math.random()
 					* (Mimodek.growingCells.size()));
@@ -175,30 +178,34 @@ public class LSystem implements StatefulObject{
 				cell.maturity = 1.0f;
 				Mimodek.growingCells.remove(cell);
 			}
-		} else {
-			if (commandIndex >= commandStr.length()) {
-				regenerate();
-			}
-			char c = commandStr.charAt(commandIndex);
-			switch (c) {
-			case 'a':
-//				Verbose.debug("Command A");
-				int t = commandA();
-				if (t == 1) {
-					commandIndex++;
-					break;
-				} else if (t < 0) {
-					//System.out.println("Missed.");
-					Creature.goEatSomeSoftCell();
-					break;
-				}
-			case 'b':
-//				Verbose.debug("Command B");
-				commandB();
+			return;
+		}
+		
+		//Otherwise generate a new cell
+		
+		//Regenerate the genetics string if its end had been reached.
+		if (commandIndex >= commandStr.length()) {
+			regenerate();
+		}
+		
+		char c = commandStr.charAt(commandIndex);
+		
+		switch (c) {
+		case 'a':
+			int t = commandA();
+			if (t == 1) {
 				commandIndex++;
 				break;
+			} else if (t < 0) { //There should be something to eat now
+				Lightie.goEatALeaf();
+				break;
 			}
+		case 'b':
+			commandB();
+			commandIndex++;
+			break;
 		}
+
 	}
 
 	public HashMap<String, Object> getState() {

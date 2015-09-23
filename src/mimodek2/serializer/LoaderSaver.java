@@ -63,26 +63,26 @@ public class LoaderSaver {
 				cells.put(cellA.id, cellA);
 				Cell.nextId = Math.max(cellA.id, Cell.nextId);
 				Mimodek.aCells.add(cellA);
-				Mimodek.theCells.add(cellA);
+				Mimodek.allCells.add(cellA);
 			}
 			
-			CellB cellB;
+			Leaf cellB;
 			for( HashMap<String, Object> cellBState : loadedState.cells_B ){
-				cellB = new CellB(null, 0);
+				cellB = new Leaf(null, 0);
 				cellB.setState(cellBState);
 				cells.put(cellB.id, cellB);
 				Cell.nextId = Math.max(cellB.id, Cell.nextId);
-				Mimodek.bCells.add(cellB);
-				Mimodek.theCells.add(cellB);
+				Mimodek.leavesCells.add(cellB);
+				Mimodek.allCells.add(cellB);
 			}
 			
-			Creature creature;
+			Lightie creature;
 			for( HashMap<String, Object> creatureState : loadedState.creatures ){
-				creature = new Creature(null, false);
+				creature = new Lightie(null, false);
 				creature.setState(creatureState);
 				cells.put(creature.id, creature);
 				Cell.nextId = Math.max(creature.id, Cell.nextId);
-				Mimodek.creatures.add(creature);
+				Mimodek.lighties.add(creature);
 			}
 			
 			Cell.nextId++;
@@ -145,7 +145,7 @@ public class LoaderSaver {
 		}
 		
 		
-		State state = new State(Mimodek.aCells, Mimodek.bCells, Mimodek.creatures, Mimodek.growingCells, Mimodek.genetics);
+		State state = new State(Mimodek.aCells, Mimodek.leavesCells, Mimodek.lighties, Mimodek.growingCells, Mimodek.genetics);
 		
 		System.out.println("Saved state:\n"+state);
 		

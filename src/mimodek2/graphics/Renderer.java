@@ -116,10 +116,10 @@ public class Renderer {
 		cellShader.set("depthOnly", false);
 	}
 	
-	public static void setUniforms(CellB cellB){
+	public static void setUniforms(Leaf cellB){
 		cellShader.set("mask", cellB_MaskTexture);
 		cellShader.set("noDeform", true);
-		cellShader.set("theTexture", CellB.texture);
+		cellShader.set("theTexture", Leaf.texture);
 		cellShader.set("depth", 1.0f);
 		cellShader.set("depthOnly", false);
 	}
@@ -179,7 +179,7 @@ public class Renderer {
 		render(renderBuffer, cellA, false);
 	}
 	
-	public static void renderWithoutShader(PGraphics renderBuffer, CellB cell){
+	public static void renderWithoutShader(PGraphics renderBuffer, Leaf cell){
 		Cell anchor = cell.anchor;
 		
 		renderBuffer.pushStyle();
@@ -195,7 +195,7 @@ public class Renderer {
 						* (cell.pos.x - anchor.pos.x), anchor.pos.y
 						+ cell.currentMaturity * (cell.pos.y - anchor.pos.y),
 						anchor.pos.x, anchor.pos.y);
-			} else if (cell.eatable) {
+			} else if (cell.edible) {
 				renderBuffer.line(anchor.pos.x + cell.currentMaturity
 						* (cell.pos.x - anchor.pos.x), anchor.pos.y
 						+ cell.currentMaturity * (cell.pos.y - anchor.pos.y),
@@ -216,18 +216,18 @@ public class Renderer {
 		renderBuffer.popStyle();
 	}
 	
-	public static void render(PGraphics renderBuffer, CellB cell){
+	public static void render(PGraphics renderBuffer, Leaf cell){
 		render(renderBuffer, cell, false);
 	}
 	
-	public static void render(PGraphics renderBuffer, CellB cell, boolean depthPass){
+	public static void render(PGraphics renderBuffer, Leaf cell, boolean depthPass){
 		
 		renderBuffer.pushStyle();
 		
 		Cell anchor = cell.anchor;
 		if(cell.creatureA !=null && cell.creatureB !=null && cell.creatureA.readyToLift && cell.creatureB.readyToLift){
 			cell.zLevel = CellA.maxLevel;
-		}else if(!cell.eatable){
+		}else if(!cell.edible){
 			cell.zLevel = anchor.zLevel;
 		}else{
 			cell.zLevel = 0;
@@ -235,7 +235,7 @@ public class Renderer {
 		
 		//Compute cell color
 		int c;
-		if(cell.eatable){
+		if(cell.edible){
 			float step = 1f;
 			if(cell.maturity>0.5f){
 				step = 1f-((cell.maturity-0.5f)/0.5f);
@@ -266,7 +266,7 @@ public class Renderer {
 		renderBuffer.rotate( PConstants.HALF_PI+cell.currentAngle,0.0f,0.0f,1.0f);
 		renderBuffer.scale(cell.radius() * cell.currentMaturity , cell.radius() * cell.currentMaturity, 1f);
 		
-		renderBuffer.shape( CellB.shape );
+		renderBuffer.shape( Leaf.shape );
 		
 		renderBuffer.popMatrix();
 		
@@ -274,7 +274,7 @@ public class Renderer {
 	}
 	
 	
-	public static void render(PGraphics renderBuffer, Creature creature){
+	public static void render(PGraphics renderBuffer, Lightie creature){
 		float s = Configurator.getFloatSetting("CREATURE_SIZE")
 				* Configurator.getFloatSetting("GLOBAL_SCALING");
 		
@@ -326,7 +326,7 @@ public class Renderer {
 		lightOcclusionShader.set("depthMask", depthMask);
 	}
 	
-	public static void renderLight(PGraphics renderBuffer, Creature creature){
+	public static void renderLight(PGraphics renderBuffer, Lightie creature){
 		float radius = PApplet.min(32f, creature.pos.z * 32f);
 
 		if( radius <= 0f)
@@ -338,7 +338,7 @@ public class Renderer {
 		
 	}
 	
-	public static void renderLightCircle(PGraphics renderBuffer, Creature creature){
+	public static void renderLightCircle(PGraphics renderBuffer, Lightie creature){
 		float radius = PApplet.min(32f, creature.pos.z * 32f);
 		//app.text(radius, creature.pos.x,creature.pos.y);
 		if( radius <= 0f)

@@ -25,13 +25,13 @@ public class Mimodek implements TrackingListener {
 	private TUIOClient tuioClient;
 	
 	/** The cells. */
-	public static ArrayList<Cell> theCells = new ArrayList<Cell>();
+	public static ArrayList<Cell> allCells = new ArrayList<Cell>();
 	
 	/** The a cells. */
 	public volatile static ArrayList<CellA> aCells = new ArrayList<CellA>();
 	
 	/** The b cells. */
-	public volatile static ArrayList<CellB> bCells = new ArrayList<CellB>();
+	public volatile static ArrayList<Leaf> leavesCells = new ArrayList<Leaf>();
 	
 	/** The growing cells. */
 	public static ArrayList<Cell> growingCells = new ArrayList<Cell>();
@@ -43,7 +43,7 @@ public class Mimodek implements TrackingListener {
 	public static PVector foodAvg = new PVector(0, 0);
 	
 	/** The creatures. */
-	public volatile static ArrayList<Creature> creatures = new ArrayList<Creature>();
+	public volatile static ArrayList<Lightie> lighties = new ArrayList<Lightie>();
 
 	/** The scent map. */
 	public static QTree scentMap;
@@ -72,9 +72,9 @@ public class Mimodek implements TrackingListener {
 	private static Object[] callArgumentsAfterRender;
 	
 	/* For sorting leaves at render time */
-	private ArrayList<CellB> leaves = new ArrayList<CellB>();
-	private ArrayList<CellB> deadLeaves = new ArrayList<CellB>();
-	private ArrayList<CellB> carriedLeaves = new ArrayList<CellB>();
+	private ArrayList<Leaf> leaves = new ArrayList<Leaf>();
+	private ArrayList<Leaf> deadLeaves = new ArrayList<Leaf>();
+	private ArrayList<Leaf> carriedLeaves = new ArrayList<Leaf>();
 	
 	private static Thread updateThread;
 	
@@ -96,14 +96,14 @@ public class Mimodek implements TrackingListener {
 		scentMap = new QTree(0, 0, FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, 1);
 		genetics = new LSystem("ab", app);
 
-		theCells = new ArrayList<Cell>();
+		allCells = new ArrayList<Cell>();
 		aCells = new ArrayList<CellA>();
-		bCells = new ArrayList<CellB>();
+		leavesCells = new ArrayList<Leaf>();
 		growingCells = new ArrayList<Cell>();
 
 		foods = new ArrayList<Food>();
 		foodAvg = new PVector(0, 0);
-		creatures = new ArrayList<Creature>();
+		lighties = new ArrayList<Lightie>();
 		
 		//Good idea to clean up the memory at this point
 		System.gc();
@@ -170,7 +170,7 @@ public class Mimodek implements TrackingListener {
 		
 		// Create geometries
 		CellA.createShape( app.g, app.loadImage("textures/hardcell.png"));
-		CellB.createShape( app.g, app.loadImage("textures/softcell.png"));
+		Leaf.createShape( app.g, app.loadImage("textures/softcell.png"));
 		
 		// create and register data interpolators
 		CellA.humidityInterpolator = new DataInterpolator("DATA_HUMIDITY",
@@ -178,8 +178,8 @@ public class Mimodek implements TrackingListener {
 		CellA.temperatureInterpolator = new TemperatureDataInterpolator(
 				dataHandler);
 		
-		CellB.pollutionInterpolator = new PollutionDataInterpolator(dataHandler);
-		CellB.temperatureInterpolator = new DataInterpolator(
+		Leaf.pollutionInterpolator = new PollutionDataInterpolator(dataHandler);
+		Leaf.temperatureInterpolator = new DataInterpolator(
 				"DATA_TEMPERATURE", dataHandler);
 		dataHandler.start();
 		
@@ -190,10 +190,10 @@ public class Mimodek implements TrackingListener {
 				FacadeFactory.getFacade().halfHeight), 1f);
 		a.maturity = 1.0f;
 		aCells.add(a);
-		theCells.add(a);
-		Creature.createHighLanderCreature(true);
-		Creature.createHighLanderCreature(true);
-		Creature.createHighLanderCreature(true);
+		allCells.add(a);
+		Lightie.createHighLander(true);
+		Lightie.createHighLander(true);
+		Lightie.createHighLander(true);
 		//reset = false;
 		
 		//Init the renderer
@@ -254,8 +254,8 @@ public class Mimodek implements TrackingListener {
 		}
 
 		// Update cells
-		for (int i = 0; i < theCells.size(); i++)
-			theCells.get(i).update(app);
+		for (int i = 0; i < allCells.size(); i++)
+			allCells.get(i).update(app);
 
 		// Update food
 		for (int f = 0; f < foods.size(); f++) {
@@ -269,11 +269,11 @@ public class Mimodek implements TrackingListener {
 		}
 
 		// Update creatures
-		for (int c = 0; c < creatures.size(); c++) {
-			Creature cr = creatures.get(c);
+		for (int c = 0; c < lighties.size(); c++) {
+			Lightie cr = lighties.get(c);
 			cr.update();
 			if (cr.energy <= 0f) {
-				creatures.remove(cr);
+				lighties.remove(cr);
 				Food.dropFood(cr.pos.x, cr.pos.y);
 				c--;
 			}
@@ -292,7 +292,7 @@ public class Mimodek implements TrackingListener {
 			
 			//propagate the change in levels through the structure
 			CellA rootCell = CellA.unRootCells();
-			ArrayList<CellB> rootLeaves = CellB.unRootLeaves();
+			ArrayList<Leaf> rootLeaves = Leaf.unRootLeaves();
 			
 			//remove them from the active cells, with their bCells and draw to background
 			drawToBackground( rootCell, rootLeaves );
@@ -339,9 +339,9 @@ public class Mimodek implements TrackingListener {
 		
 		
 		/* Render the stems */
-		if( bCells.size() > 0 ){
-			for (CellB cellB : bCells){
-				if( cellB.moving || cellB.eatable){ //sort the leaves
+		if( leavesCells.size() > 0 ){
+			for (Leaf cellB : leavesCells){
+				if( cellB.moving || cellB.edible){ //sort the leaves
 					if( cellB.moving ){
 						carriedLeaves.add( cellB );
 					}else{
@@ -370,9 +370,9 @@ public class Mimodek implements TrackingListener {
 		
 		if (leaves.size() > 0){
 			
-			Renderer.setUniforms(bCells.get(0));
-			for (CellB cellB : leaves){
-				if( cellB.moving || cellB.eatable )
+			Renderer.setUniforms(leavesCells.get(0));
+			for (Leaf cellB : leaves){
+				if( cellB.moving || cellB.edible )
 					continue;
 				Renderer.render(renderBuffer, cellB);
 			}
@@ -382,14 +382,14 @@ public class Mimodek implements TrackingListener {
 		if (carriedLeaves.size() > 0){
 			//render stems of carried leafs
 			renderBuffer.resetShader();
-			for (CellB cellB : carriedLeaves){
+			for (Leaf cellB : carriedLeaves){
 				if( cellB.creatureA != null && cellB.creatureB != null )
 					Renderer.renderWithoutShader( renderBuffer, cellB );//only render the stems above the A Cells if the leaf is not being carried
 			}
 			
 			//render leafs
 			renderBuffer.shader( Renderer.getCellShader() );
-			for (CellB cellB : carriedLeaves){
+			for (Leaf cellB : carriedLeaves){
 				Renderer.render(renderBuffer, cellB);
 			}
 
@@ -410,7 +410,7 @@ public class Mimodek implements TrackingListener {
 		if(deadLeaves.size() > 0){
 			app.shader( Renderer.getCellShader() );
 			Renderer.setUniforms(deadLeaves.get(0));
-			for(CellB cellB : deadLeaves)
+			for(Leaf cellB : deadLeaves)
 				Renderer.render(app.g, cellB);
 		}
 		
@@ -443,7 +443,7 @@ public class Mimodek implements TrackingListener {
 		 
 		app.resetShader();
 
-		for (Creature creature : creatures)
+		for (Lightie creature : lighties)
 			Renderer.renderLight(app.g, creature);
 
 		app.noTint();
@@ -451,7 +451,7 @@ public class Mimodek implements TrackingListener {
 		app.blendMode(PApplet.BLEND);
 		
 		app.shader( Renderer.getCreatureShader() );
-		for (Creature creature : creatures)
+		for (Lightie creature : lighties)
 			Renderer.render(app.g, creature );
 		
 		//De-reference
@@ -463,7 +463,7 @@ public class Mimodek implements TrackingListener {
 		callAfterRender();
 	}
 	
-	private void drawToBackground(CellA rootCell, ArrayList<CellB> rootLeaves){
+	private void drawToBackground(CellA rootCell, ArrayList<Leaf> rootLeaves){
 		
 		float time = app.millis();
 		
@@ -481,10 +481,10 @@ public class Mimodek implements TrackingListener {
 		
 		/* Render the stems */
 		if( rootLeaves.size() > 0 ){
-			for (CellB cellB : rootLeaves){
+			for (Leaf cellB : rootLeaves){
 				//De-reference
-				Mimodek.bCells.remove(cellB);
-				Mimodek.theCells.remove(cellB);
+				Mimodek.leavesCells.remove(cellB);
+				Mimodek.allCells.remove(cellB);
 				Renderer.renderWithoutShader( backgroundBuffer, cellB );
 			}
 		}
@@ -496,7 +496,7 @@ public class Mimodek implements TrackingListener {
 
 		// De-reference
 		Mimodek.aCells.remove(rootCell);
-		Mimodek.theCells.remove(rootCell);
+		Mimodek.allCells.remove(rootCell);
 
 		Renderer.setTime((time + rootCell.id * 10f) / 1000f * 0.5f);
 		Renderer.render(backgroundBuffer, rootCell);
@@ -505,7 +505,7 @@ public class Mimodek implements TrackingListener {
 		if (rootLeaves.size() > 0){
 			
 			Renderer.setUniforms(rootLeaves.get(0));
-			for (CellB cellB : rootLeaves){
+			for (Leaf cellB : rootLeaves){
 				Renderer.render(backgroundBuffer, cellB);
 			}
 		}
