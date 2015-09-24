@@ -77,8 +77,10 @@ public class LoaderSaver {
 			}
 			
 			Lightie creature;
+			boolean isHighLightie = false;
 			for( HashMap<String, Object> creatureState : loadedState.creatures ){
-				creature = new Lightie(null, false);
+				isHighLightie = creatureState.containsKey("highlander") && Boolean.class.cast( creatureState.remove("highlander") );
+				creature = isHighLightie ? new HighLightie(null) : new Lightie(null);
 				creature.setState(creatureState);
 				cells.put(creature.id, creature);
 				Cell.nextId = Math.max(creature.id, Cell.nextId);

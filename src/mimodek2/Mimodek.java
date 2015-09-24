@@ -43,7 +43,9 @@ public class Mimodek implements TrackingListener {
 	public static PVector foodAvg = new PVector(0, 0);
 	
 	/** The creatures. */
-	public volatile static ArrayList<Lightie> lighties = new ArrayList<Lightie>();
+	public  static ArrayList<Lightie> lighties = new ArrayList<Lightie>();
+	
+	public  static ArrayList<HighLightie> highLighties = new ArrayList<HighLightie>();
 
 	/** The scent map. */
 	public static QTree scentMap;
@@ -62,6 +64,8 @@ public class Mimodek implements TrackingListener {
 	public static float bgColor = 0.33f;
 	
 	public static boolean hideBg = false;
+	
+	public static int lastFpsCheck = 100;
 
 	public static void setBgColor(float r, float g, float b){
 		bgColor = app.color(r,g,b);
@@ -191,9 +195,9 @@ public class Mimodek implements TrackingListener {
 		a.maturity = 1.0f;
 		aCells.add(a);
 		allCells.add(a);
-		Lightie.createHighLander(true);
-		Lightie.createHighLander(true);
-		Lightie.createHighLander(true);
+		highLighties.add( HighLightie.spawn() );
+		highLighties.add( HighLightie.spawn() );
+		highLighties.add( HighLightie.spawn() );
 		//reset = false;
 		
 		//Init the renderer
@@ -287,9 +291,30 @@ public class Mimodek implements TrackingListener {
 		 * 
 		 */
 		//Wait a few frames to get a more accurate fps reading
-		if(app.frameCount > 100 && app.frameRate < 25f){
-			//Find the cellAs with the lowest level
+		if(app.frameCount > lastFpsCheck && app.frameRate < 25f){
 			
+			
+			//First, let's try to et rid of some idle Lighties
+			
+			Lightie idleLightie = null;
+			for(Lightie lightie : lighties){
+				if( !lightie.amIBusy() ){ //that one is doing nothing!
+					idleLightie = lightie;
+					break;
+				}
+			}
+			
+			//Find someone to hunt it down
+			if( idleLightie != null ){
+				for(HighLightie hunter : highLighties)
+					hunter.huntTarget(idleLightie);
+				return;
+			}
+			
+			lastFpsCheck = app.frameCount + 100;
+			//No idle Lightie, let's trim the structure a bit
+			
+			//Find the cellAs with the lowest level
 			//propagate the change in levels through the structure
 			CellA rootCell = CellA.unRootCells();
 			ArrayList<Leaf> rootLeaves = Leaf.unRootLeaves();
@@ -429,10 +454,6 @@ public class Mimodek implements TrackingListener {
 		
 		app.image(renderBuffer, 0, 0);
 		
-		
-		
-		
-		
 		//Render the creatures on top of everything
 		Navigation.applyTransform(app.g);
 		
@@ -473,11 +494,15 @@ public class Mimodek implements TrackingListener {
 		backgroundBuffer.textureMode(PApplet.NORMAL);
 		backgroundBuffer.colorMode(PApplet.RGB, 1.0f);
 		backgroundBuffer.strokeCap(PApplet.SQUARE);
+		backgroundBuffer.blendMode(PApplet.BLEND);
 		
 		backgroundBuffer.ortho(); //camera
+		
+		backgroundBuffer.pushStyle();
 		backgroundBuffer.noStroke();
 		backgroundBuffer.fill(0,0.0001f);
 		backgroundBuffer.rect(0,0, backgroundBuffer.width, backgroundBuffer.height); //slightly faint previous layer
+		backgroundBuffer.popStyle();
 		
 		/* Render the stems */
 		if( rootLeaves.size() > 0 ){

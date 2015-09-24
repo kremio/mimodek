@@ -294,6 +294,11 @@ public class Renderer {
 					.getFloatSetting("CREATURE_FULL_R"), Configurator
 					.getFloatSetting("CREATURE_FULL_G"), Configurator
 					.getFloatSetting("CREATURE_FULL_B"), creature.currentBrightness);
+		}  else if( creature instanceof HighLightie  ){
+			if( ((HighLightie)creature).amIHunting() )
+				renderBuffer.stroke(0.6f, 0, 0, creature.currentBrightness);
+			else
+				renderBuffer.stroke( 0, 0.6f, 0, creature.currentBrightness);
 		} else {
 			renderBuffer.stroke(Configurator
 					.getFloatSetting("CREATURE_R"), Configurator

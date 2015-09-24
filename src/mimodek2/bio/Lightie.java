@@ -52,9 +52,6 @@ public class Lightie extends Cell {
 	/** The cell b. */
 	public Leaf cellB;
 
-	/** The high lander. */
-	public boolean highLander = false;
-
 	/** The energy. */
 	public float energy;
 
@@ -82,7 +79,6 @@ public class Lightie extends Cell {
 		if (cellB != null)
 			state.put("cellB", cellB.id);
 
-		state.put("highLander", highLander);
 		state.put("energy", energy);
 		state.put("readyToLift", readyToLift);
 		state.put("currentBrightness", currentBrightness);
@@ -129,19 +125,6 @@ public class Lightie extends Cell {
 	 *
 	 * @param pos
 	 *            the pos
-	 * @param highLander
-	 *            the high lander
-	 */
-	public Lightie(PVector pos, boolean highLander) {
-		this(pos);
-		this.highLander = highLander;
-	}
-
-	/**
-	 * Instantiates a new creature.
-	 *
-	 * @param pos
-	 *            the pos
 	 */
 	public Lightie(PVector pos) {
 		super(pos);
@@ -162,9 +145,8 @@ public class Lightie extends Cell {
 		// deplete energy every 2 seconds (2000 millis)
 		if (cellB == null || cellB.edible)
 			energy -= (timeSinceUpdate / 2000f) * 0.03f;
-		if (highLander && energy < 0.5f) {
-			energy = 0.4f;
-		} else if (energy <= 0f) {// it's dead...
+		
+		if (energy <= 0f) {// it's dead...
 			return;
 		}
 
@@ -306,11 +288,8 @@ public class Lightie extends Cell {
 		// Update velocity
 		vel.add(acc);
 		// Limit speed
-		if (cellB != null && this == cellB.creatureB) {
-			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, cellB.creatureA.energy));
-		} else {
-			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, energy));
-		}
+		limitSpeed();
+		
 		if (!FacadeFactory.getFacade().isInTheScreen(PVector.add(pos, acc),
 				Configurator.getFloatSetting("CREATURE_SIZE"))) {
 			if (cellB != null && cellB.moving) {
@@ -320,9 +299,21 @@ public class Lightie extends Cell {
 					* FacadeFactory.getFacade().height));
 		}
 		pos.add(vel);
-		// Reset accelertion to 0 each cycle
+		
+		// Reset acceleration to 0 each cycle
 		acc.mult(0);
-
+	}
+	
+	public boolean amIBusy(){
+		return hasFood || cellB != null;
+	}
+	
+	protected void limitSpeed(){
+		if (cellB != null && this == cellB.creatureB) {
+			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, cellB.creatureA.energy));
+		} else {
+			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, energy));
+		}
 	}
 
 	// compare position with other creatures and steer away if too close
@@ -472,22 +463,18 @@ public class Lightie extends Cell {
 	 *            the h l
 	 * @return the creature
 	 */
-	public static Lightie createHighLander(boolean hL) {
-		Cell root = Mimodek.aCells.get(0);
-		Lightie c = new Lightie(new PVector(root.pos.x + (-25.0f + (float) Math.random() * 50f), root.pos.y
-				+ (-25.0f + (float) Math.random() * 50f)), hL);
-		Mimodek.lighties.add(c);
-		return c;
+	public static Lightie spawn() {
+		Cell root = CellA.getRandomCell().getRootCell();
+		
+		PVector pos = new PVector(root.pos.x + (-25.0f + (float) Math.random() * 50f), root.pos.y
+				+ (-25.0f + (float) Math.random() * 50f));
+		
+		Lightie newLightie = new Lightie(pos);
+		
+		Mimodek.lighties.add(newLightie);
+		return newLightie;
 	}
 
-	/**
-	 * Creates the creature.
-	 *
-	 * @return the creature
-	 */
-	public static Lightie spawn() {
-		return createHighLander(false);
-	}
 
 	/**
 	 * Go eat some soft cell.
