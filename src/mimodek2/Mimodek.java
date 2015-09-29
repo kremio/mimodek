@@ -5,15 +5,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+import oscP5.OscMessage;
 import juttu.jsconsole.JSConsole;
 import mimodek2.tracking.*;
+import mimodek2.tracking.osc.OSCom;
+import mimodek2.tracking.osc.OscMessageListener;
 import mimodek2.data.*;
 import mimodek2.bio.*;
 import mimodek2.facade.*;
 import mimodek2.graphics.*;
 import processing.core.*;
 
-public class Mimodek implements TrackingListener {
+public class Mimodek implements OscMessageListener {
 	
 	/** The number of vertices making up the geometry of type A cells */
 	public static int CELLA_VERTEX_NUMBER = 20;
@@ -70,6 +73,8 @@ public class Mimodek implements TrackingListener {
 	private ArrayList<CellB> carriedLeaves = new ArrayList<CellB>();
 	
 	private static Thread updateThread;
+	
+	public static OSCom oscCommunication;
 	
 	class UpdateRunnable implements Runnable{
 		
@@ -132,8 +137,12 @@ public class Mimodek implements TrackingListener {
 		Verbose.speak = Configurator.getBooleanSetting("DEBUG_FLAG");
 		
 		// tracking client
-		tuioClient = new TUIOClient(app);
-		tuioClient.setListener(this);
+		//tuioClient = new TUIOClient(app);
+		//tuioClient.setListener(this);
+		
+		//OSC
+		oscCommunication = new OSCom(3000, "localhost", 3001);
+		
 		
 		// Test that we can get a weather station for this location
 		// NOTE: this test has a side effect of setting the starting values for
@@ -210,21 +219,11 @@ public class Mimodek implements TrackingListener {
 		updateThread = new Thread(new UpdateRunnable( ));
 		updateThread.start();
 		
+		oscCommunication.addListener("/mimodek/activity/", this);
+		
 		
 	}
 	
-	/*
-	 * Handle data incoming from the Tracking application
-	 */
-	/* (non-Javadoc)
-	 * @see MimodekV2.tracking.TrackingListener#trackingEvent(MimodekV2.tracking.TrackingInfo)
-	 */
-	public void trackingEvent(TrackingInfo info) {
-		if (info.type == TrackingInfo.UPDATE) {
-			Food.dropFood(info.x + (-1f + (float) Math.random() * 2), info.y
-					+ (-1f + (float) Math.random() * 2));
-		}
-	}
 	
 	public static void invokeAfterRender(Method method, Object[] args){
 		callAfterRender = method;
@@ -241,7 +240,7 @@ public class Mimodek implements TrackingListener {
 		
 		if ( Configurator.getBooleanSetting("AUTO_FOOD") ) {
 			//randomly add food
-			genetics.addFood();
+			//genetics.addFood();
 		}
 
 		// Update cells
@@ -424,5 +423,31 @@ public class Mimodek implements TrackingListener {
 		}
 		callAfterRender = null;
 		callArgumentsAfterRender = null;
+	}
+	
+	/*
+	 * Handle data incoming from the Tracking application
+	 */
+	/* (non-Javadoc)
+	 * @see MimodekV2.tracking.TrackingListener#trackingEvent(MimodekV2.tracking.TrackingInfo)
+	 */
+	public void trackingEvent(TrackingInfo info) {
+		if (info.type == TrackingInfo.UPDATE) {
+			Food.dropFood(info.x + (-1f + (float) Math.random() * 2), info.y
+					+ (-1f + (float) Math.random() * 2));
+		}
+	}
+
+	/*
+	 * Handle activity data coming from the Kinect app through an OSC channel
+	 */
+	public void handleMessage(OscMessage message) {
+		
+		//If the activity is high enough add some food
+		if( message.arguments().length == 1 && message.get(0).intValue() > 10 ){
+			genetics.addFood();
+			Food.dropFood( (float)Math.random() * FacadeFactory.getFacade().width, (float)Math.random() * FacadeFactory.getFacade().height);
+		}
+		
 	}
 }
