@@ -24,8 +24,6 @@ public class Mimodek implements OscMessageListener {
 	private static PApplet app;
 
 	private DataHandler dataHandler;
-
-	private TUIOClient tuioClient;
 	
 	/** The cells. */
 	public static ArrayList<Cell> theCells = new ArrayList<Cell>();
