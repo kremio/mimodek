@@ -89,7 +89,7 @@ public class LSystem implements StatefulObject{
 
 		// make one bCell edible
 		for (Leaf cellB : Mimodek.leavesCells) {
-			if (!cellB.edible && cellB.currentMaturity >= 1f && cellB.creatureA == null && cellB.creatureB == null) {
+			if (!cellB.edible && cellB.currentMaturity >= 1f && cellB.carrierA == null && cellB.carrierB == null) {
 				cellB.makeEdible();
 				break;
 			}
@@ -101,7 +101,7 @@ public class LSystem implements StatefulObject{
 	 * Command b.
 	 */
 	private void commandB() {
-		Leaf nuC = Leaf.addCellB();
+		Leaf nuC = Leaf.addLeaf();
 		
 		if (nuC != null) {
 			Mimodek.growingCells.add(nuC);
@@ -123,12 +123,8 @@ public class LSystem implements StatefulObject{
 		
 		// make one bCell edible
 		for (Leaf cellB : Mimodek.leavesCells) {
-			
-			if (!cellB.edible && cellB.currentMaturity >= 1f
-					&& cellB.creatureA == null && cellB.creatureB == null) {
-				cellB.makeEdible();
+			if (cellB.makeEdible())
 				break;
-			}
 		}
 	}
 
@@ -197,7 +193,7 @@ public class LSystem implements StatefulObject{
 				commandIndex++;
 				break;
 			} else if (t < 0) { //There should be something to eat now
-				Lightie.goEatALeaf();
+				Leaf.getRandomLeaf().makeEdible();
 				break;
 			}
 		case 'b':

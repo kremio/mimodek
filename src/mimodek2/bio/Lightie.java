@@ -46,9 +46,6 @@ public class Lightie extends Cell {
 	/** The last food pos. */
 	public PVector lastFoodPos;
 
-	/** The work counter. */
-	public int workCounter = 0;
-
 	/** The cell b. */
 	public Leaf cellB;
 
@@ -75,7 +72,6 @@ public class Lightie extends Cell {
 		state.put("accX", acc.x);
 		state.put("accY", acc.y);
 		state.put("hasFood", hasFood);
-		state.put("workCounter", workCounter);
 		if (cellB != null)
 			state.put("cellB", cellB.id);
 
@@ -160,7 +156,6 @@ public class Lightie extends Cell {
 				hasFood = false;
 				seek(lastFoodPos);
 				lastFoodPos = null;
-				workCounter++;
 			} else {
 				seek(root.pos);
 				// drop some scent
@@ -196,11 +191,11 @@ public class Lightie extends Cell {
 						}
 					} else {
 						// move the cell out of the way
-						if (this == cellB.creatureB)
+						if (this == cellB.carrierB)
 							cellB.setAnchor(this);
 						if (tPos.dist(pos) < 10f) {
 							readyToLift = false;
-							if (!cellB.creatureA.readyToLift && !cellB.creatureB.readyToLift) {
+							if (!cellB.carrierA.readyToLift && !cellB.carrierB.readyToLift) {
 								// can drop the cell now
 								cellB.drop();
 							}
@@ -308,9 +303,19 @@ public class Lightie extends Cell {
 		return hasFood || cellB != null;
 	}
 	
+	public static Lightie getIdleLightie(){
+		for(Lightie lightie : Mimodek.lighties){
+			if( !lightie.amIBusy() )
+				return lightie;
+		}
+		if( Configurator.getIntegerSetting("CREATURE_MAX_COUNT_INT") > Mimodek.lighties.size() )
+			return spawn();
+		return null;
+	}
+	
 	protected void limitSpeed(){
-		if (cellB != null && this == cellB.creatureB) {
-			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, cellB.creatureA.energy));
+		if (cellB != null && this == cellB.carrierB) {
+			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, cellB.carrierA.energy));
 		} else {
 			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, energy));
 		}
@@ -356,20 +361,20 @@ public class Lightie extends Cell {
 	 */
 	PVector maintainDistance() {
 		PVector constraint = new PVector(0, 0);
-		if ((this == cellB.creatureA && PApplet.abs(pos.dist(cellB.creatureB.pos) - cellB.getSize()) > 5f)
-				|| (this == cellB.creatureB && PApplet.abs(pos.dist(cellB.creatureA.pos) - cellB.getSize()) > 5f)) {
+		if ((this == cellB.carrierA && PApplet.abs(pos.dist(cellB.carrierB.pos) - cellB.getSize()) > 5f)
+				|| (this == cellB.carrierB && PApplet.abs(pos.dist(cellB.carrierA.pos) - cellB.getSize()) > 5f)) {
 			float a = 0;
-			if (this == cellB.creatureA) {
-				if (pos.dist(cellB.creatureB.pos) - cellB.getSize() > 0) {
-					a = PApplet.atan2(cellB.creatureB.pos.y - pos.y, cellB.creatureB.pos.x - pos.x);
+			if (this == cellB.carrierA) {
+				if (pos.dist(cellB.carrierB.pos) - cellB.getSize() > 0) {
+					a = PApplet.atan2(cellB.carrierB.pos.y - pos.y, cellB.carrierB.pos.x - pos.x);
 				} else {
-					a = PApplet.atan2(pos.y - cellB.creatureB.pos.y, pos.x - cellB.creatureB.pos.x);
+					a = PApplet.atan2(pos.y - cellB.carrierB.pos.y, pos.x - cellB.carrierB.pos.x);
 				}
 			} else {
-				if (pos.dist(cellB.creatureA.pos) - cellB.getSize() > 0) {
-					a = PApplet.atan2(cellB.creatureA.pos.y - pos.y, cellB.creatureA.pos.x - pos.x);
+				if (pos.dist(cellB.carrierA.pos) - cellB.getSize() > 0) {
+					a = PApplet.atan2(cellB.carrierA.pos.y - pos.y, cellB.carrierA.pos.x - pos.x);
 				} else {
-					a = PApplet.atan2(pos.y - cellB.creatureA.pos.y, pos.x - cellB.creatureA.pos.x);
+					a = PApplet.atan2(pos.y - cellB.carrierA.pos.y, pos.x - cellB.carrierA.pos.x);
 				}
 			}
 			constraint = new PVector(PApplet.cos(a), PApplet.sin(a));
@@ -457,7 +462,7 @@ public class Lightie extends Cell {
 	}
 
 	/**
-	 * Creates the high lander creature.
+	 * Creates the creature.
 	 *
 	 * @param hL
 	 *            the h l
@@ -473,21 +478,6 @@ public class Lightie extends Cell {
 		
 		Mimodek.lighties.add(newLightie);
 		return newLightie;
-	}
-
-
-	/**
-	 * Go eat some soft cell.
-	 */
-	public static void goEatALeaf() {
-		Lightie c = Mimodek.lighties.get(0);
-		int i = 1;
-		while (c.hasFood && i < Mimodek.lighties.size()) {
-			c = Mimodek.lighties.get(i++);
-		}
-		if (!c.hasFood) {
-			c.workCounter = 10;
-		}
 	}
 
 	/*

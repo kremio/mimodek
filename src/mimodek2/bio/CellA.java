@@ -26,6 +26,7 @@ import java.util.HashMap;
 import mimodek2.*;
 import mimodek2.data.*;
 import mimodek2.facade.FacadeFactory;
+import mimodek2.graphics.Tween;
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
@@ -40,14 +41,16 @@ import processing.core.PVector;
 public class CellA extends Cell {
 	
 	
-	public static final float MIN_DEPTH = 0.7f;
-	public static final float MAX_DEPTH = 1f + MIN_DEPTH;
+	public static final float MIN_DEPTH = 1f;
+	public static final float MAX_DEPTH = 2f + MIN_DEPTH;
 	
 	/** The level. */
-	public int level = 0;
+	public float level = 1f;
+	
+	protected static Tween maxLevelTween = new Tween(CellA.class, "maxLevel", 1f, 1000);
 	
 	/** The max level. */
-	public static int maxLevel = 1;
+	public static float maxLevel = 1f;
 	
 	/** The maxz level. */
 	public static float maxzLevel = 0f;
@@ -143,13 +146,18 @@ public class CellA extends Cell {
 	@Override
 	void setAnchor(Cell anchor){
 		super.setAnchor(anchor);
-		level = ((CellA)anchor).level+1;
+		level = ((CellA)anchor).level;
+		//This tween should be slower that the max level tween to track it properly
+		new Tween(this, "level", level+1f, maxLevelTween.duration + 1000);
 		zLevel = anchor.zLevel+((CellA)anchor).zLevelSlope;
+		
 		maxzLevel = PApplet.max(maxzLevel,zLevel);
 		minzLevel = PApplet.min(minzLevel,zLevel);
 		zLevelSlope = ((CellA)anchor).zLevelSlope;
 		((CellA)anchor).zLevelSlope*=-1f;
-		maxLevel = PApplet.max(level,maxLevel);
+		if( maxLevelTween.targetValue < level+1 )
+			maxLevelTween.restart( level+1 );
+		//maxLevel = ;
 		angularMovement = (float) (Math.random() * (PConstants.HALF_PI / 10f));
 		angularMovement *= Math.random() > 0.5 ? 1f : -1f;
 	}
@@ -165,7 +173,7 @@ public class CellA extends Cell {
 	}
 	
 	public float depth(){
-		return ((float)level / (float)maxLevel) + MIN_DEPTH;
+		return MIN_DEPTH + (level / maxLevel) * (MAX_DEPTH - MIN_DEPTH);
 	}
 	
 	/* (non-Javadoc)
@@ -251,6 +259,9 @@ public class CellA extends Cell {
 			//Pick a random cell 
 			anchor = getRandomCell();
 			
+			if( anchor.level < 1.0f)
+				continue;
+			
 			//Root cell, used to modulate the size of the cells
 			root = anchor.getRootCell();
 			
@@ -315,19 +326,28 @@ public class CellA extends Cell {
 		return ((CellA)anchor).getRootCell();
 	}
 	
-	public int updateLevel(){
-		if( anchor == null ){
-			return level;
+	public boolean updateLevel(CellA rootCell){
+		if( anchor == null)
+			return false;
+		
+		if( anchor.id == rootCell.id || ((CellA)anchor).updateLevel(rootCell)){
+			if(anchor.id == rootCell.id)
+				anchor = null;
+			new Tween(this, "level", level-1f, maxLevelTween.duration + 1000);
+			return true;
 		}
 		
-		int incLevel = ((CellA)anchor).updateLevel();
-		level += incLevel;
+		return false;
 		
+		//level += incLevel;
+		/*
 		if( level == 0 )
 			anchor = null;
 		
 		return incLevel;
+		*/
 	}
+	
 	
 	/**
 	 * 
@@ -338,17 +358,24 @@ public class CellA extends Cell {
 	public static CellA unRootCells(){
 
 		//Find the root cell of a cell picked randomly
-		CellA rootCell = Mimodek.aCells.get( (int) Math.floor( (Math.random()*Mimodek.aCells.size() ) ) ).getRootCell();
-		rootCell.level = -1;
+		CellA rootCell = getRandomCell().getRootCell();
+		new Tween(rootCell, "level", 0.5f, maxLevelTween.duration + 1000);
+		Mimodek.cellsToFossilize.add(rootCell);
 		
 		//Update the levels
 		float max = 0;
 		for(CellA cellA : Mimodek.aCells){
-			cellA.updateLevel();
-			max = Math.max(cellA.level, max);
+			if( cellA.updateLevel(rootCell) ){
+				max = Math.max(cellA.level-1f, max);
+			}else{
+				max = Math.max(cellA.level, max);
+			}
+			//
 		}
 		
-		CellA.maxLevel = (int)max;
+		maxLevelTween.restart( max );
+		
+		//CellA.maxLevel = (int)max;
 		
 		return rootCell;
 	}

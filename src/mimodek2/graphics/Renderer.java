@@ -187,10 +187,10 @@ public class Renderer {
 		//Draw the stem	
 		if (cell.currentMaturity > 0.4f) {
 			renderBuffer.strokeWeight(1.0f);
-			renderBuffer.stroke(1.0f);
+			renderBuffer.stroke(1.0f, (cell.moving ? CellA.MAX_DEPTH : ((CellA)anchor).depth()));
 			renderBuffer.noFill();
-			if (cell.creatureA != null && cell.creatureB != null
-					&& cell.creatureA.readyToLift && cell.creatureB.readyToLift) {
+			if (cell.carrierA != null && cell.carrierB != null
+					&& cell.carrierA.readyToLift && cell.carrierB.readyToLift) {
 				renderBuffer.line(anchor.pos.x + cell.currentMaturity
 						* (cell.pos.x - anchor.pos.x), anchor.pos.y
 						+ cell.currentMaturity * (cell.pos.y - anchor.pos.y),
@@ -225,7 +225,7 @@ public class Renderer {
 		renderBuffer.pushStyle();
 		
 		Cell anchor = cell.anchor;
-		if(cell.creatureA !=null && cell.creatureB !=null && cell.creatureA.readyToLift && cell.creatureB.readyToLift){
+		if(cell.carrierA !=null && cell.carrierB !=null && cell.carrierA.readyToLift && cell.carrierB.readyToLift){
 			cell.zLevel = CellA.maxLevel;
 		}else if(!cell.edible){
 			cell.zLevel = anchor.zLevel;

@@ -31,7 +31,6 @@ public class HighLightie extends Lightie {
 	
 	public HighLightie(PVector pos) {
 		super(pos);
-		// TODO Auto-generated constructor stub
 	}
 	
 	/**
@@ -77,8 +76,8 @@ public class HighLightie extends Lightie {
 	}
 	
 	protected void limitSpeed(){
-		if (cellB != null && this == cellB.creatureB) {
-			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, cellB.creatureA.energy));
+		if (cellB != null && this == cellB.carrierB) {
+			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, cellB.carrierA.energy));
 		} else if( amIHunting() ){
 			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") );
 		}else{

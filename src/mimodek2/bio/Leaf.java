@@ -23,6 +23,7 @@ package mimodek2.bio;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import mimodek2.*;
 import mimodek2.data.*;
@@ -39,6 +40,8 @@ import processing.core.PVector;
  * The Class CellB.
  */
 public class Leaf extends Cell {
+	
+	public static HashSet<Leaf> toBePickedUp = new HashSet<Leaf>();
 
 	/** The use pollution data. */
 	public static boolean usePollutionData = true;
@@ -71,9 +74,9 @@ public class Leaf extends Cell {
 	public boolean edible = false;
 
 	/** The creature b. */
-	public Lightie creatureA;
+	public Lightie carrierA;
 
-	public Lightie creatureB;
+	public Lightie carrierB;
 
 	/** The drop me at a. */
 	PVector dropMeAtA;
@@ -98,11 +101,11 @@ public class Leaf extends Cell {
 		state.put("eatable", edible);
 		state.put("color", color);
 
-		if (creatureA != null)
-			state.put("creatureA", creatureA.id);
+		if (carrierA != null)
+			state.put("creatureA", carrierA.id);
 
-		if (creatureB != null)
-			state.put("creatureB", creatureB.id);
+		if (carrierB != null)
+			state.put("creatureB", carrierB.id);
 
 		if (dropMeAtA != null) {
 			state.put("dropMeAtAX", dropMeAtA.x);
@@ -186,13 +189,19 @@ public class Leaf extends Cell {
 		super(pos);
 		this.distanceModifier = distanceModifier;
 	}
+	
+	public static Leaf getRandomLeaf(){
+		return Mimodek.leavesCells.get( (int)Math.floor(Math.random() * Mimodek.leavesCells.size() ) );
+	}
 
 	/**
 	 * Make the leaf edible
 	 */
-	public void makeEdible() {
-		if (!edible && currentMaturity >= 1f && creatureA == null && creatureB == null) {
-			call2Creatures();
+	public boolean makeEdible() {
+		if (!edible && currentMaturity >= 1f) {
+			return pluckMe();
+		}else{
+			return false;
 		}
 	}
 
@@ -222,7 +231,32 @@ public class Leaf extends Cell {
 	/**
 	 * Call2 creatures.
 	 */
-	void call2Creatures() {
+	boolean pluckMe() {
+		if( carrierA != null && carrierB != null ){
+			toBePickedUp.remove(this);
+			return true;
+		}
+		
+		if( carrierA == null){
+			carrierA = Lightie.getIdleLightie();
+			if( carrierA == null){ //no free lighties to carry the leaf away
+				toBePickedUp.add(this);
+				return false;
+			}
+		}
+		
+		carrierA.cellB = this;
+		
+		carrierB = Lightie.getIdleLightie();
+		if( carrierB == null){ //no free lighties to carry the leaf away
+			toBePickedUp.add(this);
+			return false;
+		}
+		carrierB.cellB = this;
+		toBePickedUp.remove(this);
+		return true;
+		
+		/*
 		int count = 0;
 		// one from the existing ones
 		int indA = PApplet.round((float) Math.random() * (Mimodek.lighties.size() - 1));
@@ -239,6 +273,7 @@ public class Leaf extends Cell {
 		// and an fresh new one
 		creatureB = Lightie.spawn();
 		creatureB.cellB = this;
+		*/
 	}
 
 	/**
@@ -247,12 +282,12 @@ public class Leaf extends Cell {
 	void drop() {
 		moving = false;
 		edible = true;
-		pos = new PVector(creatureA.pos.x, creatureA.pos.y);
-		setAnchor(new Cell(new PVector(creatureB.pos.x, creatureB.pos.y)));
-		creatureA.cellB = null;
-		creatureB.cellB = null;
-		creatureA = null;
-		creatureB = null;
+		pos = new PVector(carrierA.pos.x, carrierA.pos.y);
+		setAnchor(new Cell(new PVector(carrierB.pos.x, carrierB.pos.y)));
+		carrierA.cellB = null;
+		carrierB.cellB = null;
+		carrierA = null;
+		carrierB = null;
 		dropMeAtA = null;
 		dropMeAtB = null;
 	}
@@ -265,13 +300,13 @@ public class Leaf extends Cell {
 	 * @return the creature target position
 	 */
 	PVector getCreatureTargetPosition(Lightie c) {
-		if (creatureA == null || creatureB == null)
+		if (carrierA == null || carrierB == null)
 			return null;
 		
-		if( c.id != creatureA.id && c.id != creatureB.id )
+		if( c.id != carrierA.id && c.id != carrierB.id )
 			return null;
 		
-		if (creatureA.readyToLift && creatureB.readyToLift) {
+		if (carrierA.readyToLift && carrierB.readyToLift) {
 			if (dropMeAtA == null && dropMeAtB == null) {
 				// find a place to dump the b cell far away from the center
 				float a = 0f;
@@ -290,11 +325,11 @@ public class Leaf extends Cell {
 			}
 			
 			moving = true;
-			return c.id == creatureA.id ? dropMeAtA : dropMeAtB;
+			return c.id == carrierA.id ? dropMeAtA : dropMeAtB;
 
 		}
 		
-		if (c.id == creatureA.id) { // creature A goes to the top
+		if (c.id == carrierA.id) { // creature A goes to the top
 			return new PVector(anchor.pos.x + currentMaturity * (pos.x - anchor.pos.x), anchor.pos.y + currentMaturity
 					* (pos.y - anchor.pos.y), anchor.pos.z);
 		} else { // creature B goes at the bottom
@@ -348,7 +383,7 @@ public class Leaf extends Cell {
 			}
 		}
 
-		if (creatureA == null && creatureB == null && !edible) {
+		if (carrierA == null && carrierB == null && !edible) {
 			for (int c = 0; c < Mimodek.lighties.size(); c++) {
 				Lightie cr = Mimodek.lighties.get(c);
 				if (cr.pos.dist(pos) < 20) {
@@ -364,7 +399,7 @@ public class Leaf extends Cell {
 				}
 			}
 		} else if (moving) {
-			currentAngle = PApplet.atan2(creatureA.pos.y - anchor.pos.y, creatureA.pos.x - anchor.pos.x);
+			currentAngle = PApplet.atan2(carrierA.pos.y - anchor.pos.y, carrierA.pos.x - anchor.pos.x);
 		}
 
 		pos.x = anchor.pos.x + PApplet.cos(currentAngle)
@@ -412,7 +447,7 @@ public class Leaf extends Cell {
 	 * 
 	 * @return the new newly created cell or null if all attempts failed.
 	 */
-	public static Leaf addCellB() {
+	public static Leaf addLeaf() {
 		float cellA_radius = Configurator.getFloatSetting("CELLA_RADIUS");
 		float cellB_radius = Configurator.getFloatSetting("CELLB_RADIUS");
 		float minDistanceToA = Configurator.getFloatSetting("CELLB_MIN_DISTANCE_TO_A");
@@ -440,6 +475,9 @@ public class Leaf extends Cell {
 		do {
 			counter++;
 			anchor = CellA.getRandomCell();
+			if(anchor.level < 1.0f)
+				continue;
+			
 			a = (float) Math.random() * (PConstants.TWO_PI);
 			distanceModifier = (float) Math.random();
 
@@ -503,7 +541,7 @@ public class Leaf extends Cell {
 		ArrayList<Leaf> rootCells = new ArrayList<Leaf>();
 		//Update the levels and collect all root cells
 		for(Leaf cellB : Mimodek.leavesCells){
-			if( cellB.isLeafOffCellA() && ((CellA)cellB.anchor).level < 0 ){
+			if( cellB.isLeafOffCellA() && ((CellA)cellB.anchor).level == 0 ){
 				rootCells.add(cellB);
 			}
 		}
