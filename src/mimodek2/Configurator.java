@@ -233,6 +233,8 @@ public class Configurator {
 		Configurator.setSetting("LOCATION_COUNTRY_STR","Spain","Country where Mimodek is running.");
 		
 		Configurator.setSetting("WU_API_KEY_STR","not specified","Key for the Weather Underground API");
+		
+		Configurator.setSetting("ACTIVITY_THRESHOLD_FLOAT", 1.2f, "Above which to add food");
 		/*
 		 * NOTE: Coordinates have priority on City and Country when searching for a weather station so don't set them unless you are absolutely sure they are right or you might get weather data for Tombouctou.
 		 * Latitude: 16.73222222

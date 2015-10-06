@@ -6,7 +6,7 @@
 		<jar destfile="/Volumes/Slowee/Users/Jonsku/Desktop/Mimodek/Mimodek.jar">
 			<manifest>
 				<attribute name="Main-Class" value="mimodek2.MimodekPApplet"/>
-				<attribute name="Class-Path" value=". Mimodek_lib/core.jar Mimodek_lib/gluegen-rt-natives-macosx-universal.jar Mimodek_lib/gluegen-rt.jar Mimodek_lib/jogl-all-natives-macosx-universal.jar Mimodek_lib/jogl-all.jar Mimodek_lib/libTUIO.jar Mimodek_lib/TUIO.jar"/>
+				<attribute name="Class-Path" value=". Mimodek_lib/core.jar Mimodek_lib/gluegen-rt-natives-macosx-universal.jar Mimodek_lib/gluegen-rt.jar Mimodek_lib/jogl-all-natives-macosx-universal.jar Mimodek_lib/jogl-all.jar Mimodek_lib/libTUIO.jar Mimodek_lib/TUIO.jar Mimodek_lib/oscP5.jar"/>
 			</manifest>
 			<fileset dir="/Volumes/Slowee/Users/Jonsku/Documents/workspace/Mimodek2/bin"/>
 		</jar>
@@ -19,6 +19,7 @@
 		<copy file="/Volumes/Slowee/Users/Jonsku/Documents/workspace/Mimodek2/jogl-all.jar" todir="/Volumes/Slowee/Users/Jonsku/Desktop/Mimodek/Mimodek_lib"/>
 		<copy file="/Volumes/Slowee/Users/Jonsku/Documents/workspace/Mimodek2/libTUIO.jar" todir="/Volumes/Slowee/Users/Jonsku/Desktop/Mimodek/Mimodek_lib"/>
 		<copy file="/Volumes/Slowee/Users/Jonsku/Documents/workspace/Mimodek2/TUIO.jar" todir="/Volumes/Slowee/Users/Jonsku/Desktop/Mimodek/Mimodek_lib"/>
+		<copy file="/Volumes/Slowee/Users/Jonsku/Documents/workspace/Mimodek2/oscP5.jar" todir="/Volumes/Slowee/Users/Jonsku/Desktop/Mimodek/Mimodek_lib"/>
 		
 		<!-- MacOS native libs -->
 		<copy file="/Volumes/Slowee/Users/Jonsku/Documents/workspace/Mimodek2/jogl-all-natives-macosx-universal.jar" todir="/Volumes/Slowee/Users/Jonsku/Desktop/Mimodek/Mimodek_lib"/> 

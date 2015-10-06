@@ -74,6 +74,8 @@ public class Mimodek implements OscMessageListener {
 	
 	public static OSCom oscCommunication;
 	
+	private static float lastOscData = 0;
+	
 	class UpdateRunnable implements Runnable{
 		
 		public void run() {
@@ -397,6 +399,7 @@ public class Mimodek implements OscMessageListener {
 			app.text("Cells:" + aCells.size(), 20, 110, 1);
 			app.text("Leaves:" + bCells.size(), 20, 130, 1);
 			app.text("Creatures:" + creatures.size(), 20, 150, 1);
+			app.text("Osc:"+lastOscData, 20, 180);
 		}
 		
 		//Run callback, if any
@@ -440,9 +443,10 @@ public class Mimodek implements OscMessageListener {
 	 * Handle activity data coming from the Kinect app through an OSC channel
 	 */
 	public void handleMessage(OscMessage message) {
-		
+		if( message.arguments().length == 1)
+			lastOscData = message.get(0).floatValue();
 		//If the activity is high enough add some food
-		if( message.arguments().length == 1 && message.get(0).intValue() > 10 ){
+		if( message.arguments().length == 1 /*&& message.get(0).floatValue() > Configurator.getFloatSetting("ACTIVITY_THRESHOLD_FLOAT")*/ ){
 			genetics.addFood();
 			Food.dropFood( (float)Math.random() * FacadeFactory.getFacade().width, (float)Math.random() * FacadeFactory.getFacade().height);
 		}
