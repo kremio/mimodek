@@ -26,13 +26,14 @@ public class Mimodek implements OscMessageListener {
 	private DataHandler dataHandler;
 	
 	/** The cells. */
-	public static ArrayList<Cell> theCells = new ArrayList<Cell>();
+	public static ArrayList<Cell> allCells = new ArrayList<Cell>();
 	
 	/** The a cells. */
 	public  static ArrayList<CellA> aCells = new ArrayList<CellA>();
+	public volatile static ArrayList<CellA> cellsToFossilize = new ArrayList<CellA>();
 	
 	/** The b cells. */
-	public  static ArrayList<CellB> bCells = new ArrayList<CellB>();
+	public volatile static ArrayList<Leaf> leavesCells = new ArrayList<Leaf>();
 	
 	/** The growing cells. */
 	public static ArrayList<Cell> growingCells = new ArrayList<Cell>();
@@ -44,7 +45,9 @@ public class Mimodek implements OscMessageListener {
 	public static PVector foodAvg = new PVector(0, 0);
 	
 	/** The creatures. */
-	public  static ArrayList<Creature> creatures = new ArrayList<Creature>();
+	public  static ArrayList<Lightie> lighties = new ArrayList<Lightie>();
+	
+	public  static ArrayList<HighLightie> highLighties = new ArrayList<HighLightie>();
 
 	/** The scent map. */
 	public static QTree scentMap;
@@ -53,22 +56,23 @@ public class Mimodek implements OscMessageListener {
 	public static LSystem genetics;
 	
 	public static PGraphics renderBuffer;
+	public static PGraphics backgroundBuffer;
 	
 	public PImage cellsAPass;
 	
 	/* JS Console */
 	public JSConsole jsConsole;
 	
-	public static boolean pause = false;
-
+	public static int lastFpsCheck = 100;
+	
 	/* Post render hook callback */
 	private static Method callAfterRender;
 	private static Object[] callArgumentsAfterRender;
 	
 	/* For sorting leaves at render time */
-	private ArrayList<CellB> leaves = new ArrayList<CellB>();
-	private ArrayList<CellB> deadLeaves = new ArrayList<CellB>();
-	private ArrayList<CellB> carriedLeaves = new ArrayList<CellB>();
+	private ArrayList<Leaf> leaves = new ArrayList<Leaf>();
+	private ArrayList<Leaf> deadLeaves = new ArrayList<Leaf>();
+	private ArrayList<Leaf> carriedLeaves = new ArrayList<Leaf>();
 	
 	private static Thread updateThread;
 	
@@ -98,14 +102,14 @@ public class Mimodek implements OscMessageListener {
 		scentMap = new QTree(0, 0, FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, 1);
 		genetics = new LSystem("ab", app);
 
-		theCells = new ArrayList<Cell>();
+		allCells = new ArrayList<Cell>();
 		aCells = new ArrayList<CellA>();
-		bCells = new ArrayList<CellB>();
+		leavesCells = new ArrayList<Leaf>();
 		growingCells = new ArrayList<Cell>();
 
 		foods = new ArrayList<Food>();
 		foodAvg = new PVector(0, 0);
-		creatures = new ArrayList<Creature>();
+		lighties = new ArrayList<Lightie>();
 		
 		//Good idea to clean up the memory at this point
 		System.gc();
@@ -119,6 +123,7 @@ public class Mimodek implements OscMessageListener {
 		FacadeFactory.createFacade(facadeType, app).border = 10f;
 		
 		renderBuffer = app.createGraphics(FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, PApplet.P3D);
+		backgroundBuffer = app.createGraphics(FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, PApplet.P3D);
 		
 		app.textureMode(PApplet.NORMAL);
 		app.colorMode(PApplet.RGB, 1.0f);
@@ -173,7 +178,7 @@ public class Mimodek implements OscMessageListener {
 		
 		// Create geometries
 		CellA.createShape( app.g, app.loadImage("textures/hardcell.png"));
-		CellB.createShape( app.g, app.loadImage("textures/softcell.png"));
+		Leaf.createShape( app.g, app.loadImage("textures/softcell.png"));
 		
 		// create and register data interpolators
 		CellA.humidityInterpolator = new DataInterpolator("DATA_HUMIDITY",
@@ -181,8 +186,8 @@ public class Mimodek implements OscMessageListener {
 		CellA.temperatureInterpolator = new TemperatureDataInterpolator(
 				dataHandler);
 		
-		CellB.pollutionInterpolator = new PollutionDataInterpolator(dataHandler);
-		CellB.temperatureInterpolator = new DataInterpolator(
+		Leaf.pollutionInterpolator = new PollutionDataInterpolator(dataHandler);
+		Leaf.temperatureInterpolator = new DataInterpolator(
 				"DATA_TEMPERATURE", dataHandler);
 		dataHandler.start();
 		
@@ -193,10 +198,10 @@ public class Mimodek implements OscMessageListener {
 				FacadeFactory.getFacade().halfHeight), 1f);
 		a.maturity = 1.0f;
 		aCells.add(a);
-		theCells.add(a);
-		Creature.createHighLanderCreature(true);
-		Creature.createHighLanderCreature(true);
-		Creature.createHighLanderCreature(true);
+		allCells.add(a);
+		highLighties.add( HighLightie.spawn() );
+		highLighties.add( HighLightie.spawn() );
+		highLighties.add( HighLightie.spawn() );
 		//reset = false;
 		
 		//Init the renderer
@@ -235,15 +240,35 @@ public class Mimodek implements OscMessageListener {
 	 * Update.
 	 */
 	public void update() {
+		Tween.updateTweens();
+		
+		//True death loop
+		for (int c = 0; c < aCells.size(); c++){
+			CellA cellA = aCells.get(c);
+			if(cellA.level == 0f){
+				Mimodek.aCells.remove(cellA);
+				Mimodek.allCells.remove(cellA);
+			}
+		}
+		
+		//try to remove leaves that could not be removed before due to a shortage of lighties
+		Leaf[] toBePickedUp = (Leaf[])Leaf.toBePickedUp.toArray(new  Leaf[0]);
+		for(Leaf leaf: toBePickedUp){
+			leaf.makeEdible();
+		}
 		
 		if ( Configurator.getBooleanSetting("AUTO_FOOD") ) {
 			//randomly add food
 			//genetics.addFood();
 		}
+		
+		
 
 		// Update cells
-		for (int i = 0; i < theCells.size(); i++)
-			theCells.get(i).update(app);
+		for (int c = 0; c < allCells.size(); c++)
+			allCells.get(c).update(app);
+		
+		
 
 		// Update food
 		for (int f = 0; f < foods.size(); f++) {
@@ -257,18 +282,85 @@ public class Mimodek implements OscMessageListener {
 		}
 
 		// Update creatures
-		for (int c = 0; c < creatures.size(); c++) {
-			Creature cr = creatures.get(c);
+		for (int c = 0; c < lighties.size(); c++) {
+			Lightie cr = lighties.get(c);
 			cr.update();
-			if (cr.energy <= 0f) {
-				creatures.remove(cr);
+			if ( cr.isDead() ) {
+				lighties.remove(cr);
 				Food.dropFood(cr.pos.x, cr.pos.y);
 				c--;
 			}
 		}
+		
+		/*
+		 * Homeostasis:
+		 * Remove the oldest cells from active rendering
+		 * in order to maintain a satisfying frame rate.
+		 * The removed cells are added to the background.  
+		 * 
+		 */
+		//Wait a few frames to get a more accurate fps reading
+		if(app.frameCount > lastFpsCheck && app.frameRate < 25f){
+			
+			
+			//First, let's try to et rid of some idle Lighties
+			/*
+			Lightie idleLightie = null;
+			for(Lightie lightie : lighties){
+				if( !lightie.amIBusy() ){ //that one is doing nothing!
+					idleLightie = lightie;
+					break;
+				}
+			}
+			
+			//Find someone to hunt it down
+			if( idleLightie != null ){
+				for(HighLightie hunter : highLighties)
+					hunter.huntTarget(idleLightie);
+				return;
+			}
+			*/
+			
+			lastFpsCheck = app.frameCount + 100;
+			//Let's trim the structure a bit
+			CellA.unRootCells();
+		}
+		
+		fossilizeStructure();
+	}
+	
+	public static void fossilizeStructure(){
+		//Find the cellAs with the lowest level
+		//propagate the change in levels through the structure
+		if( cellsToFossilize.size() < 1 ){
+			return;
+		}
+		
+		//First check if some cells are done fading
+		ArrayList<CellA> rootCells = new ArrayList<CellA>();
+		ArrayList<Leaf> rootLeaves = Leaf.unRootLeaves();
+		for(int c = 0; c < cellsToFossilize.size(); c++){
+			CellA rootCell = cellsToFossilize.get(c);
+			if(rootCell.level <= 0.5f){
+				rootCells.add(rootCell);
+				cellsToFossilize.remove(c);
+				new Tween(rootCell, "level", 0f, 5*60000);
+			}
+		}
+		
+		
+		//System.out.println("Removed one cell and "+rootLeaves.size()+" leaves.");
+		
+		//remove them from the active cells, with their bCells and draw to background
+		drawToBackground( rootCells, rootLeaves );
 	}
 	
 	public void draw(){
+		
+		float time = app.millis();
+		
+		app.blendMode(PApplet.BLEND);
+		
 		
 		//Init global drawing parameters
 		renderBuffer.beginDraw();
@@ -279,7 +371,12 @@ public class Mimodek implements OscMessageListener {
 		
 		renderBuffer.ortho(); //camera
 		renderBuffer.background(0,0); //clear previous frame
+		
+		
+		
+		
 		Navigation.applyTransform(renderBuffer); //set global transform
+		
 		
 		/*
 		 * Layout (from bottom to top):
@@ -293,9 +390,9 @@ public class Mimodek implements OscMessageListener {
 		
 		
 		/* Render the stems */
-		if( bCells.size() > 0 ){
-			for (CellB cellB : bCells){
-				if( cellB.moving || cellB.eatable){ //sort the leaves
+		if( leavesCells.size() > 0 ){
+			for (Leaf cellB : leavesCells){
+				if( cellB.moving || cellB.edible){ //sort the leaves
 					if( cellB.moving ){
 						carriedLeaves.add( cellB );
 					}else{
@@ -309,22 +406,26 @@ public class Mimodek implements OscMessageListener {
 		}
 		
 		/* Render the cells */
-		renderBuffer.shader( Renderer.getCellShader() );
+		renderBuffer.shader( Renderer.getCellShader() );		
 		
 		if (aCells.size() > 0) {
 			
 			Renderer.setUniforms(aCells.get(0));
+			
 			for (CellA cellA: aCells){
-				Renderer.setTime( (app.millis()+cellA.id*10f)/1000f * 0.5f );
+				if(cellA.level <= 0.5f) //only used has space holder
+					continue;
+				Renderer.setTime( (time+cellA.id*10f)/1000f * 0.5f );
 				Renderer.render(renderBuffer, cellA);
+				
 			}
 		}
 		
 		if (leaves.size() > 0){
 			
-			Renderer.setUniforms(bCells.get(0));
-			for (CellB cellB : leaves){
-				if( cellB.moving || cellB.eatable )
+			Renderer.setUniforms(leavesCells.get(0));
+			for (Leaf cellB : leaves){
+				if( cellB.moving || cellB.edible )
 					continue;
 				Renderer.render(renderBuffer, cellB);
 			}
@@ -334,15 +435,14 @@ public class Mimodek implements OscMessageListener {
 		if (carriedLeaves.size() > 0){
 			//render stems of carried leafs
 			renderBuffer.resetShader();
-			renderBuffer.noLights();
-			for (CellB cellB : carriedLeaves){
-				if( cellB.creatureA != null && cellB.creatureB != null )
+			for (Leaf cellB : carriedLeaves){
+				if( cellB.carrierA != null && cellB.carrierB != null )
 					Renderer.renderWithoutShader( renderBuffer, cellB );//only render the stems above the A Cells if the leaf is not being carried
 			}
 			
 			//render leafs
 			renderBuffer.shader( Renderer.getCellShader() );
-			for (CellB cellB : carriedLeaves){
+			for (Leaf cellB : carriedLeaves){
 				Renderer.render(renderBuffer, cellB);
 			}
 
@@ -350,15 +450,20 @@ public class Mimodek implements OscMessageListener {
 		
 		renderBuffer.endDraw();
 		
+		
+		/* Compose the final image from the multiple passes */
 		app.resetShader();
 		app.pushMatrix();
 		Navigation.applyTransform(app.g);
+		
+		// Draw the background
+		app.image(backgroundBuffer, 0, 0);
 		
 		//Render the dead leaves
 		if(deadLeaves.size() > 0){
 			app.shader( Renderer.getCellShader() );
 			Renderer.setUniforms(deadLeaves.get(0));
-			for(CellB cellB : deadLeaves)
+			for(Leaf cellB : deadLeaves)
 				Renderer.render(app.g, cellB);
 		}
 		
@@ -373,13 +478,30 @@ public class Mimodek implements OscMessageListener {
 		
 		//Render the living cells
 		app.resetShader();
+		
+		
 		app.image(renderBuffer, 0, 0);
 		
 		//Render the creatures on top of everything
 		app.pushMatrix();
 		Navigation.applyTransform(app.g);
+		
+		app.blendMode(PApplet.ADD);
+		
+		//TODO: try rendering in a buffer
+		app.tint(0.5f);
+		 
+		app.resetShader();
+
+		for (Lightie creature : lighties)
+			Renderer.renderLight(app.g, creature);
+
+		app.noTint();
+		
+		app.blendMode(PApplet.BLEND);
+		
 		app.shader( Renderer.getCreatureShader() );
-		for (Creature creature : creatures)
+		for (Lightie creature : lighties)
 			Renderer.render(app.g, creature );
 		
 		//De-reference
@@ -395,13 +517,69 @@ public class Mimodek implements OscMessageListener {
 			app.text("Humidity: "+Configurator.getFloatSetting("DATA_HUMIDITY"), 20, 60, 1);
 			app.text("FPS: "+app.frameRate, 20, 90, 1);
 			app.text("Cells:" + aCells.size(), 20, 110, 1);
-			app.text("Leaves:" + bCells.size(), 20, 130, 1);
-			app.text("Creatures:" + creatures.size(), 20, 150, 1);
+			app.text("Leaves:" + leaves.size(), 20, 130, 1);
+			app.text("Creatures:" + lighties.size(), 20, 150, 1);
 			app.text("Osc:"+lastOscData, 20, 180);
 		}
 		
 		//Run callback, if any
 		callAfterRender();
+	}
+	
+	private static void drawToBackground(ArrayList<CellA> rootCells, ArrayList<Leaf> rootLeaves) {
+
+		float time = app.millis();
+
+		// Init global drawing parameters
+		backgroundBuffer.beginDraw();
+		backgroundBuffer.hint(PApplet.DISABLE_DEPTH_MASK);
+		backgroundBuffer.textureMode(PApplet.NORMAL);
+		backgroundBuffer.colorMode(PApplet.RGB, 1.0f);
+		backgroundBuffer.strokeCap(PApplet.SQUARE);
+		backgroundBuffer.blendMode(PApplet.BLEND);
+		backgroundBuffer.ortho(); // camera
+
+		backgroundBuffer.pushStyle();
+		backgroundBuffer.noStroke();
+		backgroundBuffer.fill(0, 0.005f);
+		backgroundBuffer.rect(0, 0, backgroundBuffer.width, backgroundBuffer.height); // slightly faint previous layer
+		
+		backgroundBuffer.popStyle();
+
+		/* Render the stems */
+		if (rootLeaves.size() > 0) {
+			for (Leaf cellB : rootLeaves) {
+				// De-reference
+				Mimodek.leavesCells.remove(cellB);
+				Mimodek.allCells.remove(cellB);
+				Renderer.renderWithoutShader(backgroundBuffer, cellB);
+			}
+		}
+		/* Render the cell */
+		backgroundBuffer.shader(Renderer.getCellShader());
+		if (rootCells.size() > 0) {
+
+			Renderer.setUniforms(rootCells.get(0));
+
+			for (CellA rootCell : rootCells) {
+				// De-reference
+				// Mimodek.aCells.remove(rootCell);
+				// Mimodek.allCells.remove(rootCell);
+
+				Renderer.setTime((time + rootCell.id * 10f) / 1000f * 0.5f);
+				Renderer.render(backgroundBuffer, rootCell);
+			}
+		}
+
+		if (rootLeaves.size() > 0) {
+
+			Renderer.setUniforms(rootLeaves.get(0));
+			for (Leaf cellB : rootLeaves) {
+				Renderer.render(backgroundBuffer, cellB);
+			}
+		}
+		backgroundBuffer.resetShader();
+		backgroundBuffer.endDraw();
 	}
 	
 	public void callAfterRender() {

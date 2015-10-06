@@ -27,8 +27,9 @@ Need to figure out exactly out to setup JOGL libraries on Linux
 * Saving/loading state
 
 * Settings control with JS console
+* Loading console setup script from file
 - Saving console commands history
-- Loading console setup script from file
+
  
 Third party JARs:
 TUIO.jar

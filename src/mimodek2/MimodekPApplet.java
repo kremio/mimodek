@@ -42,7 +42,6 @@ public class MimodekPApplet extends PApplet{
 		background( Configurator.getBooleanSetting("FULLSCREEN_FLAG") ? 0 :.33f );
 		mimodek.update();
 		mimodek.draw();
-		
 	}
 	
 	float mouseIntX;

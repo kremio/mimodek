@@ -16,9 +16,10 @@ public class Renderer {
 	private static PImage cellB_MaskTexture;
 	
 	private static PShader creatureShader;
-	private static PImage creatureTexture;
+	public static PImage creatureTexture;
 	
 	private static PShader foodShader;
+	private static PShader lightOcclusionShader;
 	
 	public static void setup(PApplet app){
 		cellShader = app.loadShader("glsl/cell_frag.glsl", "glsl/cell_vert.glsl");
@@ -35,6 +36,11 @@ public class Renderer {
 	
 		foodShader = app.loadShader("glsl/food_frag.glsl", "glsl/food_vert.glsl");
 		foodShader.set("sharpness", 0.5f);
+		
+		lightOcclusionShader = app.loadShader("glsl/light_occlusion_frag.glsl"/*,"glsl/light_occlusion_vert.glsl"*/);
+		//lightOcclusionShader.set("resolution", (float)app.width, (float)app.height);
+		lightOcclusionShader.set("lightTexture", creatureTexture );
+		System.out.println("All shaders were loaded.");
 	}
 	
 	/*
@@ -96,42 +102,56 @@ public class Renderer {
 	public static PShader getFoodShader(){
 		return foodShader;
 	}
+	
+	public static PShader getLightShader(){
+		return lightOcclusionShader;
+	}
 
 	//Set the shader's uniforms for each type of cells
 	public static void setUniforms(CellA cellA){
 		cellShader.set("mask", cellA_MaskTexture);
 		cellShader.set("noDeform", false);
 		cellShader.set("theTexture", CellA.texture);
+		cellShader.set("depth", 1.0f);
+		cellShader.set("depthOnly", false);
 	}
 	
-	public static void setUniforms(CellB cellB){
+	public static void setUniforms(Leaf cellB){
 		cellShader.set("mask", cellB_MaskTexture);
 		cellShader.set("noDeform", true);
-		cellShader.set("theTexture", CellB.texture);
+		cellShader.set("theTexture", Leaf.texture);
+		cellShader.set("depth", 1.0f);
+		cellShader.set("depthOnly", false);
 	}
 	
 	public static void setTime(float t){
 		cellShader.set("time", t);
 	}
 	
+	/*
 	public static void renderDepth(PGraphics renderBuffer, CellA cellA){
 		cellShader.set("depth", (float)cellA.level / (float)CellA.maxLevel );
 		
 		render(renderBuffer, cellA);
 	}
+	*/
 	
 	public static void setShaderColorUniform(PShader shader, String uniformName, int rgb255, float alpha){
 		shader.set(uniformName, (rgb255 >> 16 & 0xFF)/255f, (rgb255 >> 8 & 0xFF)/255f, (rgb255 & 0xFF)/255f, alpha );
 	}
 	
-	public static void render(PGraphics renderBuffer, CellA cellA){
+	public static void render(PGraphics renderBuffer, CellA cellA, boolean depthPass){
+		float depth = cellA.depth();
+		
 		renderBuffer.pushStyle();
 		
-		renderBuffer.noLights();
-		
-		//Set the tint color
-		int c = mimodek2.data.TemperatureColorRanges.getColor( CellA.temperatureInterpolator.getInterpolatedValue( PApplet.lerp(1f,0f,(float)cellA.level/(float)CellA.maxLevel) ) );
-		setShaderColorUniform(cellShader, "cellColor", c, Configurator.getFloatSetting("CELLA_ALPHA") );
+		if( !depthPass ){		
+			//Set the tint color
+			int c = mimodek2.data.TemperatureColorRanges.getColor( CellA.temperatureInterpolator.getInterpolatedValue( PApplet.lerp(1f,0f,(float)cellA.level/(float)CellA.maxLevel) ) );
+			setShaderColorUniform(cellShader, "cellColor", c, Configurator.getFloatSetting("CELLA_ALPHA") );
+		}
+		cellShader.set("depthOnly", depthPass);
+		cellShader.set("depth", depth);
 		
 		//Place and rotate the cell
 		renderBuffer.pushMatrix();
@@ -155,7 +175,11 @@ public class Renderer {
 		renderBuffer.popStyle();
 	}
 	
-	public static void renderWithoutShader(PGraphics renderBuffer, CellB cell){
+	public static void render(PGraphics renderBuffer, CellA cellA) {
+		render(renderBuffer, cellA, false);
+	}
+	
+	public static void renderWithoutShader(PGraphics renderBuffer, Leaf cell){
 		Cell anchor = cell.anchor;
 		
 		renderBuffer.pushStyle();
@@ -163,15 +187,15 @@ public class Renderer {
 		//Draw the stem	
 		if (cell.currentMaturity > 0.4f) {
 			renderBuffer.strokeWeight(1.0f);
-			renderBuffer.stroke(1.0f);
+			renderBuffer.stroke(1.0f, (cell.moving ? CellA.MAX_DEPTH : ((CellA)anchor).depth()));
 			renderBuffer.noFill();
-			if (cell.creatureA != null && cell.creatureB != null
-					&& cell.creatureA.readyToLift && cell.creatureB.readyToLift) {
+			if (cell.carrierA != null && cell.carrierB != null
+					&& cell.carrierA.readyToLift && cell.carrierB.readyToLift) {
 				renderBuffer.line(anchor.pos.x + cell.currentMaturity
 						* (cell.pos.x - anchor.pos.x), anchor.pos.y
 						+ cell.currentMaturity * (cell.pos.y - anchor.pos.y),
 						anchor.pos.x, anchor.pos.y);
-			} else if (cell.eatable) {
+			} else if (cell.edible) {
 				renderBuffer.line(anchor.pos.x + cell.currentMaturity
 						* (cell.pos.x - anchor.pos.x), anchor.pos.y
 						+ cell.currentMaturity * (cell.pos.y - anchor.pos.y),
@@ -192,14 +216,18 @@ public class Renderer {
 		renderBuffer.popStyle();
 	}
 	
-	public static void render(PGraphics renderBuffer, CellB cell){
+	public static void render(PGraphics renderBuffer, Leaf cell){
+		render(renderBuffer, cell, false);
+	}
+	
+	public static void render(PGraphics renderBuffer, Leaf cell, boolean depthPass){
+		
 		renderBuffer.pushStyle();
 		
-		renderBuffer.noLights();
 		Cell anchor = cell.anchor;
-		if(cell.creatureA !=null && cell.creatureB !=null && cell.creatureA.readyToLift && cell.creatureB.readyToLift){
+		if(cell.carrierA !=null && cell.carrierB !=null && cell.carrierA.readyToLift && cell.carrierB.readyToLift){
 			cell.zLevel = CellA.maxLevel;
-		}else if(!cell.eatable){
+		}else if(!cell.edible){
 			cell.zLevel = anchor.zLevel;
 		}else{
 			cell.zLevel = 0;
@@ -207,19 +235,27 @@ public class Renderer {
 		
 		//Compute cell color
 		int c;
-		if(cell.eatable){
+		if(cell.edible){
 			float step = 1f;
 			if(cell.maturity>0.5f){
 				step = 1f-((cell.maturity-0.5f)/0.5f);
 			}
 			int deadColor = renderBuffer.color(0.8f);
 			c = renderBuffer.lerpColor(cell.color,deadColor,step);
+			cellShader.set("depth", CellA.MIN_DEPTH);
 		}else{
+			
+			float depth = cell.moving ? CellA.MAX_DEPTH : ((CellA)anchor).depth();
+			cellShader.set("depth", depth);
 			c = cell.color;	
 		}
 		
-		//Set the tint color
-		setShaderColorUniform(cellShader, "cellColor", c, cell.currentBrightness );
+		cellShader.set("depthOnly", depthPass);
+		
+		if( !depthPass ){
+			//Set the tint color
+			setShaderColorUniform(cellShader, "cellColor", c, cell.currentBrightness );
+		}
 		
 		//Draw the leaf
 		renderBuffer.pushMatrix();
@@ -230,7 +266,7 @@ public class Renderer {
 		renderBuffer.rotate( PConstants.HALF_PI+cell.currentAngle,0.0f,0.0f,1.0f);
 		renderBuffer.scale(cell.radius() * cell.currentMaturity , cell.radius() * cell.currentMaturity, 1f);
 		
-		renderBuffer.shape( CellB.shape );
+		renderBuffer.shape( Leaf.shape );
 		
 		renderBuffer.popMatrix();
 		
@@ -238,7 +274,7 @@ public class Renderer {
 	}
 	
 	
-	public static void render(PGraphics renderBuffer, Creature creature){
+	public static void render(PGraphics renderBuffer, Lightie creature){
 		float s = Configurator.getFloatSetting("CREATURE_SIZE")
 				* Configurator.getFloatSetting("GLOBAL_SCALING");
 		
@@ -258,6 +294,8 @@ public class Renderer {
 					.getFloatSetting("CREATURE_FULL_R"), Configurator
 					.getFloatSetting("CREATURE_FULL_G"), Configurator
 					.getFloatSetting("CREATURE_FULL_B"), creature.currentBrightness);
+		}  else if( creature instanceof HighLightie  ){
+				renderBuffer.stroke( 0, 0.6f, 0, creature.currentBrightness);
 		} else {
 			renderBuffer.stroke(Configurator
 					.getFloatSetting("CREATURE_R"), Configurator
@@ -285,4 +323,35 @@ public class Renderer {
 		renderBuffer.point(food.x, food.y);
 		renderBuffer.popStyle();
 	}
+	
+	public static void setDepthMask(PImage depthMask){
+		lightOcclusionShader.set("depthMask", depthMask);
+	}
+	
+	public static void renderLight(PGraphics renderBuffer, Lightie creature){
+		float radius = PApplet.min(32f, creature.pos.z * 32f);
+
+		if( radius <= 0f)
+			return;
+
+		renderBuffer.image(creatureTexture, creature.pos.x - radius, creature.pos.y - radius, radius*2, radius*2);
+		
+		
+		
+	}
+	
+	public static void renderLightCircle(PGraphics renderBuffer, Lightie creature){
+		float radius = PApplet.min(32f, creature.pos.z * 32f);
+		//app.text(radius, creature.pos.x,creature.pos.y);
+		if( radius <= 0f)
+			return;
+		
+		renderBuffer.pushStyle();
+		renderBuffer.noStroke();
+		renderBuffer.fill(creature.pos.z);
+		renderBuffer.ellipse(creature.pos.x, creature.pos.y, 2*radius, 2*radius);
+		renderBuffer.popStyle();
+	}
+
+
 }

@@ -1,0 +1,66 @@
+Lighties creation conditions:
+- Some are created at start-up (highlanders, can't be killed)
+- When the organism is fed 5 seconds apart (see bio.LSystem)
+- When a leaf needs to be removed
+
+Homeostasis:
+- Tries to maintain the frame rate above 24 fps
+- Render all cells and leaves static by painting them to the background FBO, thus reducing the amount of objects that has to be drawn each frame.
+- Hunt and eat idle lighties.
+
+Control of cell growth:
+
+
+Cellular differentiation:
+
+
+Sensing and reacting to the environment:
+
+
+Inhibitory field:
+- Existing cells and leafs prevent new structure to overlap
+
+Cell communication:
+
+Bibliography:
+- D'Arcy Wentworth Thompson, 1918, "On Growth and Form", Pioneered the use of physical mechanisms and mathematical models to explain morphogenesis
+- Erwin Schrödinger, 1944, "What is life?", On the physical nature of life, the idea of "order-from-disorder"
+- Alan Turing, 1952, "THE CHEMICAL BASIS OF MOKPHOGENESIS", role of reaction-diffusion in morphogenesis
+- Hans Meinhardt, 1982, "Models of biological pattern formation"
+- Ken Perlin, 1983, "Perlin noise", a gradient noise generation algorithm to produce more natural textures
+http://www.eb.tuebingen.mpg.de/research/emeriti/hans-meinhardt/home.html
+
+Conference:
+	EvoMUSART: International Conference on Evolutionary and Biologically Inspired Music, Sound, Art and Design
+	Deadline: 1 November 2015
+	30 March - 1 April 2016, Porto, Protugal
+	http://www.evostar.org/2016/cfp_evomusart.php
+
+
+
+Making Mimodek:
+
+Present the process of creating a bio-digital system, reflects on the challenges and insights that came with
+its technical design and implementation.
+
+Build up of complexity through order and disorder (cf. Shrödinger):
+
+Complexity arise from the interaction of simple behaviours. Due to the experimental nature of the design of the system,
+these behaviours are not added following a well thought out plan, but rather as ideas arise. Furthermore, the inception of
+these ideas come mostly from evaluating how the system behaves, and therefore there is natural feedback loop mechanism
+integrated in the design process.
+
+At the implementation level, this approach brings interesting challenges. Indeed, since the form and behaviour of the system are not
+rigid in time but evolutionary, the code has to be constantly modified to implement the changing shape of the design. This aspect
+of the project has prompted the use of an open software architecture, that gives the ability to easily add and remove modules.
+
+The use of version control tools has greatly eased the process, because they precisely allow to maintain and work on several versions
+of the code. Even the concepts that these tools are based upon - branching, merging - evoke the evolutionary nature of making Mimodek. 
+
+Pathways of communication between the different logical components of the software have naturally appeared, like they would in a biological
+system. For instance, there is one module akin to a central nervous system that deals with the coordination of the components, but
+communication between modules also happens outside of this command center.
+
+How to include the audience?
+
+
