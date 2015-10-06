@@ -154,6 +154,7 @@ public class Configurator {
 		Configurator.setSetting("CELLA_G",1f,"Range between 0f and 1f. The green component of the hard cells color.");
 		Configurator.setSetting("CELLA_B",0f,"Range between 0f and 1f. The blue component of the hard cells color.");
 		Configurator.setSetting("CELLA_ALPHA",1f,"Range between 0f and 1f. The alpha component of the hard cells color.");
+		Configurator.setSetting("CELLA_MAX_LEAVES_INT",5,"How many leaves a cell a can have.");
 		
 		/*
 		 * Soft cell settings

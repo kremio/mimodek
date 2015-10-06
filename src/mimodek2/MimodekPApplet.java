@@ -31,7 +31,7 @@ public class MimodekPApplet extends PApplet{
 	}
 
 	public void draw() {
-		background(Mimodek.bgColor);
+		background(0.33f);
 		mimodek.update();
 		mimodek.draw();
 	}

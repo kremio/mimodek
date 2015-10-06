@@ -47,7 +47,7 @@ public class Lightie extends Cell {
 	public PVector lastFoodPos;
 
 	/** The cell b. */
-	public Leaf cellB;
+	public Leaf leaf;
 
 	/** The energy. */
 	public float energy;
@@ -72,8 +72,8 @@ public class Lightie extends Cell {
 		state.put("accX", acc.x);
 		state.put("accY", acc.y);
 		state.put("hasFood", hasFood);
-		if (cellB != null)
-			state.put("cellB", cellB.id);
+		if (leaf != null)
+			state.put("cellB", leaf.id);
 
 		state.put("energy", energy);
 		state.put("readyToLift", readyToLift);
@@ -139,7 +139,7 @@ public class Lightie extends Cell {
 	public void update() {
 		long timeSinceUpdate = System.currentTimeMillis() - lastUpdate;
 		// deplete energy every 2 seconds (2000 millis)
-		if (cellB == null || cellB.edible)
+		if (leaf == null || leaf.edible)
 			energy -= (timeSinceUpdate / 2000f) * 0.03f;
 		
 		if (energy <= 0f) {// it's dead...
@@ -163,27 +163,27 @@ public class Lightie extends Cell {
 			}
 		} else {
 			// when energy is half full, seek for cell B to eat
-			if (energy < 0.5f && cellB == null) {
-				cellB = Leaf.getEatableCell();
+			if (energy < 0.5f && leaf == null) {
+				leaf = Leaf.getEatableCell();
 			}
 
-			if (cellB != null) { // Found something to eat
-				if (cellB.edible) {
+			if (leaf != null) { // Found something to eat
+				if (leaf.edible) {
 					// go move a b cell
-					if (cellB.pos.dist(pos) < 5f) {
+					if (leaf.pos.dist(pos) < 5f) {
 						// eat
-						float amount = cellB.maturity >= 1f - energy ? 1f - energy : cellB.maturity;
-						cellB.maturity -= amount;
+						float amount = leaf.maturity >= 1f - energy ? 1f - energy : leaf.maturity;
+						leaf.maturity -= amount;
 						energy += amount;
-						cellB = null;
+						leaf = null;
 					} else {
-						seek(cellB.pos);
+						seek(leaf.pos);
 					}
 				} else {
-					PVector tPos = cellB.getCreatureTargetPosition(this);
+					PVector tPos = leaf.getCreatureTargetPosition(this);
 					if (tPos == null) {
-						cellB = null;
-					} else if (!cellB.moving) {
+						leaf = null;
+					} else if (!leaf.moving) {
 						if (tPos.dist(pos) < 5f) {
 							readyToLift = true;
 						} else {
@@ -191,13 +191,14 @@ public class Lightie extends Cell {
 						}
 					} else {
 						// move the cell out of the way
-						if (this == cellB.carrierB)
-							cellB.setAnchor(this);
+						if (this == leaf.carrierB){
+							leaf.startToLift(this);
+						}
 						if (tPos.dist(pos) < 10f) {
 							readyToLift = false;
-							if (!cellB.carrierA.readyToLift && !cellB.carrierB.readyToLift) {
+							if (!leaf.carrierA.readyToLift && !leaf.carrierB.readyToLift) {
 								// can drop the cell now
-								cellB.drop();
+								leaf.drop();
 							}
 						} else {
 							seek(tPos);
@@ -224,7 +225,7 @@ public class Lightie extends Cell {
 			}
 		}
 
-		if (cellB == null && !hasFood) {
+		if (leaf == null && !hasFood) {
 
 			// if we are very close to the food we saw before and it has
 			// Disappeared, look for another piece
@@ -262,7 +263,7 @@ public class Lightie extends Cell {
 		}
 
 		// Apply separation rule
-		if (cellB != null && cellB.moving) {
+		if (leaf != null && leaf.moving) {
 			PVector mnt = maintainDistance();
 			mnt.mult(1.0f); // weighted
 			acc.add(mnt);
@@ -287,8 +288,8 @@ public class Lightie extends Cell {
 		
 		if (!FacadeFactory.getFacade().isInTheScreen(PVector.add(pos, acc),
 				Configurator.getFloatSetting("CREATURE_SIZE"))) {
-			if (cellB != null && cellB.moving) {
-				cellB.drop();
+			if (leaf != null && leaf.moving) {
+				leaf.drop();
 			}
 			seek(new PVector((float) (Math.random() * FacadeFactory.getFacade().width), (float) Math.random()
 					* FacadeFactory.getFacade().height));
@@ -300,8 +301,10 @@ public class Lightie extends Cell {
 	}
 	
 	public boolean amIBusy(){
-		return hasFood || cellB != null;
+		return hasFood || leaf != null;
 	}
+
+	
 	
 	public static Lightie getIdleLightie(){
 		for(Lightie lightie : Mimodek.lighties){
@@ -313,9 +316,10 @@ public class Lightie extends Cell {
 		return null;
 	}
 	
+	
 	protected void limitSpeed(){
-		if (cellB != null && this == cellB.carrierB) {
-			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, cellB.carrierA.energy));
+		if (leaf != null && this == leaf.carrierB) {
+			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, leaf.carrierA.energy));
 		} else {
 			vel.limit(Configurator.getFloatSetting("CREATURE_MAXSPEED") * PApplet.min(1f, energy));
 		}
@@ -361,20 +365,20 @@ public class Lightie extends Cell {
 	 */
 	PVector maintainDistance() {
 		PVector constraint = new PVector(0, 0);
-		if ((this == cellB.carrierA && PApplet.abs(pos.dist(cellB.carrierB.pos) - cellB.getSize()) > 5f)
-				|| (this == cellB.carrierB && PApplet.abs(pos.dist(cellB.carrierA.pos) - cellB.getSize()) > 5f)) {
+		if ((this == leaf.carrierA && PApplet.abs(pos.dist(leaf.carrierB.pos) - leaf.getSize()) > 5f)
+				|| (this == leaf.carrierB && PApplet.abs(pos.dist(leaf.carrierA.pos) - leaf.getSize()) > 5f)) {
 			float a = 0;
-			if (this == cellB.carrierA) {
-				if (pos.dist(cellB.carrierB.pos) - cellB.getSize() > 0) {
-					a = PApplet.atan2(cellB.carrierB.pos.y - pos.y, cellB.carrierB.pos.x - pos.x);
+			if (this == leaf.carrierA) {
+				if (pos.dist(leaf.carrierB.pos) - leaf.getSize() > 0) {
+					a = PApplet.atan2(leaf.carrierB.pos.y - pos.y, leaf.carrierB.pos.x - pos.x);
 				} else {
-					a = PApplet.atan2(pos.y - cellB.carrierB.pos.y, pos.x - cellB.carrierB.pos.x);
+					a = PApplet.atan2(pos.y - leaf.carrierB.pos.y, pos.x - leaf.carrierB.pos.x);
 				}
 			} else {
-				if (pos.dist(cellB.carrierA.pos) - cellB.getSize() > 0) {
-					a = PApplet.atan2(cellB.carrierA.pos.y - pos.y, cellB.carrierA.pos.x - pos.x);
+				if (pos.dist(leaf.carrierA.pos) - leaf.getSize() > 0) {
+					a = PApplet.atan2(leaf.carrierA.pos.y - pos.y, leaf.carrierA.pos.x - pos.x);
 				} else {
-					a = PApplet.atan2(pos.y - cellB.carrierA.pos.y, pos.x - cellB.carrierA.pos.x);
+					a = PApplet.atan2(pos.y - leaf.carrierA.pos.y, pos.x - leaf.carrierA.pos.x);
 				}
 			}
 			constraint = new PVector(PApplet.cos(a), PApplet.sin(a));
@@ -488,6 +492,10 @@ public class Lightie extends Cell {
 	@Override
 	public float radius() {
 		return Configurator.getFloatSetting("CREATURE_SIZE");
+	}
+	
+	public boolean isDead(){
+		return leaf == null && energy <= 0f;
 	}
 
 }

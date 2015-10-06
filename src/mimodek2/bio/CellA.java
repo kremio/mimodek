@@ -70,6 +70,8 @@ public class CellA extends Cell {
 	/** The z level slope. */
 	public float zLevelSlope = 1f;
 	
+	public int leavesCount;
+	
 	/** The temperature interpolator. */
 	public static DataInterpolator temperatureInterpolator;
 	
@@ -378,6 +380,18 @@ public class CellA extends Cell {
 		//CellA.maxLevel = (int)max;
 		
 		return rootCell;
+	}
+
+	public void addLeaf() {
+		leavesCount++;
+	}
+	
+	public void removeLeaf() {
+		leavesCount--;
+	}
+	
+	public boolean canAddLeaf(){
+		return leavesCount < Configurator.getIntegerSetting("CELLA_MAX_LEAVES_INT");
 	}
 
 

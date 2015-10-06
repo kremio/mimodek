@@ -62,15 +62,7 @@ public class Mimodek implements TrackingListener {
 	/* JS Console */
 	public JSConsole jsConsole;
 	
-	public static float bgColor = 0.33f;
-	
-	public static boolean hideBg = false;
-	
 	public static int lastFpsCheck = 100;
-
-	public static void setBgColor(float r, float g, float b){
-		bgColor = app.color(r,g,b);
-	}
 	
 	/* Post render hook callback */
 	private static Method callAfterRender;
@@ -295,7 +287,7 @@ public class Mimodek implements TrackingListener {
 		for (int c = 0; c < lighties.size(); c++) {
 			Lightie cr = lighties.get(c);
 			cr.update();
-			if (cr.energy <= 0f) {
+			if ( cr.isDead() ) {
 				lighties.remove(cr);
 				Food.dropFood(cr.pos.x, cr.pos.y);
 				c--;
@@ -465,9 +457,9 @@ public class Mimodek implements TrackingListener {
 		app.resetShader();
 		app.pushMatrix();
 		Navigation.applyTransform(app.g);
-		if( !hideBg )
-			//Draw the background
-			app.image(backgroundBuffer,0,0);
+		
+		// Draw the background
+		app.image(backgroundBuffer, 0, 0);
 		
 		//Render the dead leaves
 		if(deadLeaves.size() > 0){
@@ -536,13 +528,13 @@ public class Mimodek implements TrackingListener {
 		backgroundBuffer.colorMode(PApplet.RGB, 1.0f);
 		backgroundBuffer.strokeCap(PApplet.SQUARE);
 		backgroundBuffer.blendMode(PApplet.BLEND);
-
 		backgroundBuffer.ortho(); // camera
 
 		backgroundBuffer.pushStyle();
 		backgroundBuffer.noStroke();
-		backgroundBuffer.fill(0, 0.0001f);
+		backgroundBuffer.fill(0, 0.005f);
 		backgroundBuffer.rect(0, 0, backgroundBuffer.width, backgroundBuffer.height); // slightly faint previous layer
+		
 		backgroundBuffer.popStyle();
 
 		/* Render the stems */

@@ -224,6 +224,8 @@ public class Leaf extends Cell {
 	@Override
 	void setAnchor(Cell anchor) {
 		super.setAnchor(anchor);
+		if( anchor instanceof CellA)
+			((CellA)anchor).addLeaf();
 		currentAngle = angleToAnchor;
 		nextOffsetAngle = angleToAnchor;
 	}
@@ -245,14 +247,14 @@ public class Leaf extends Cell {
 			}
 		}
 		
-		carrierA.cellB = this;
+		carrierA.leaf = this;
 		
 		carrierB = Lightie.getIdleLightie();
 		if( carrierB == null){ //no free lighties to carry the leaf away
 			toBePickedUp.add(this);
 			return false;
 		}
-		carrierB.cellB = this;
+		carrierB.leaf = this;
 		toBePickedUp.remove(this);
 		return true;
 		
@@ -284,8 +286,8 @@ public class Leaf extends Cell {
 		edible = true;
 		pos = new PVector(carrierA.pos.x, carrierA.pos.y);
 		setAnchor(new Cell(new PVector(carrierB.pos.x, carrierB.pos.y)));
-		carrierA.cellB = null;
-		carrierB.cellB = null;
+		carrierA.leaf = null;
+		carrierB.leaf = null;
 		carrierA = null;
 		carrierB = null;
 		dropMeAtA = null;
@@ -325,6 +327,7 @@ public class Leaf extends Cell {
 			}
 			
 			moving = true;
+
 			return c.id == carrierA.id ? dropMeAtA : dropMeAtB;
 
 		}
@@ -350,12 +353,7 @@ public class Leaf extends Cell {
 	}
 
 	
-	public boolean isLeafOffCellA(){
-		if(edible || moving)
-			return false;
-		
-		return anchor instanceof CellA;
-	}
+
 	
 	/*
 	 * (non-Javadoc)
@@ -475,7 +473,7 @@ public class Leaf extends Cell {
 		do {
 			counter++;
 			anchor = CellA.getRandomCell();
-			if(anchor.level < 1.0f)
+			if( !anchor.canAddLeaf() || anchor.level < 1f)
 				continue;
 			
 			a = (float) Math.random() * (PConstants.TWO_PI);
@@ -495,7 +493,8 @@ public class Leaf extends Cell {
 			addIt = true;
 
 			for (Cell toTest : Mimodek.allCells) {
-
+				if( toTest instanceof CellA && ((CellA)toTest).level < 1f)
+					continue;
 				if (toTest.pos.dist(pos) < (cellB_radius + toTest.radius())
 						+ ((toTest instanceof Leaf) ? 0 : minDistanceToA)) { // 3:7
 					addIt = false;
@@ -530,6 +529,13 @@ public class Leaf extends Cell {
 		return null;
 	}
 	
+	public boolean isLeafOffCellA(){
+		if(edible || moving)
+			return false;
+		
+		return anchor instanceof CellA;
+	}
+	
 	/**
 	 * IMPORTANT: Call after CellA.unRootCells()
 	 * 
@@ -547,6 +553,13 @@ public class Leaf extends Cell {
 		}
 		
 		return rootCells;
+	}
+
+	public void startToLift(Lightie lightie) {
+		if( anchor instanceof CellA)
+			((CellA)anchor).removeLeaf();
+		setAnchor(lightie);
+		
 	}
 
 }
