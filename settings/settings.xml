@@ -65,4 +65,7 @@ _STR" description="The name of the image to use as a board">facade text</setting
 <setting name="UPLOAD_RATE" description="Frequency of screen shot post in minutes.">1.0</setting>
 <setting name="WORDPRESS_URL_STR" description="URL of the blog.">http://mimodek.medialab-prado.es/</setting>
 <setting name="WU_API_KEY_STR" description="Key for the Weather Underground API">0a37afab349f03e3</setting>
+<setting name="FULLSCREEN_FLAG" description="True to launch mimodek in fullscreen">true</setting>
+<setting name="WINDOW_WIDTH_INT" description="The width of the window when using Facade type FULL_WINDOW">960</setting>
+<setting name="WINDOW_HEIGHT_INT" description="The height of the window when using Facade type FULL_WINDOW">640</setting>
 </mimodeksettings>

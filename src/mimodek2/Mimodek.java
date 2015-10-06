@@ -132,9 +132,7 @@ public class Mimodek implements OscMessageListener {
 			Verbose.overRule(e.getMessage());
 		}
 		
-		Configurator.createConfigurator(app);
-		Configurator.loadFromFile("settings/settings.xml");
-		Verbose.speak = Configurator.getBooleanSetting("DEBUG_FLAG");
+		
 		
 		// tracking client
 		//tuioClient = new TUIOClient(app);
@@ -209,7 +207,7 @@ public class Mimodek implements OscMessageListener {
 		
 		//Create JavaScript console
 		try {
-			jsConsole = new JSConsole("js/InitConsole.js");
+			jsConsole = new JSConsole("js/InitConsole.js", !Configurator.getBooleanSetting("FULLSCREEN_FLAG") );
 			jsConsole.runCommand("help()");
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block

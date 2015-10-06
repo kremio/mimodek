@@ -276,7 +276,7 @@ public class JSConsole implements CaretListener{
 	
 
 	
-	public JSConsole(){
+	public JSConsole(boolean showConsole){
 		
 		//Initialise the writers to get output from the JS engine
 		ScriptContext newContext = new SimpleScriptContext();
@@ -346,7 +346,8 @@ public class JSConsole implements CaretListener{
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		
 		consoleFrame.add(scrollPane);
-		consoleFrame.setVisible(true);
+		
+		consoleFrame.setVisible(showConsole);
 		
 		bindToJs("console", this);
 		
@@ -354,8 +355,8 @@ public class JSConsole implements CaretListener{
 		newPrompt();
 	}
 	
-	public JSConsole(String pathToBootFile) throws FileNotFoundException{
-		this();
+	public JSConsole(String pathToBootFile, boolean showConsole) throws FileNotFoundException{
+		this( showConsole );
 		loadJSFile(pathToBootFile);
 	}
 	

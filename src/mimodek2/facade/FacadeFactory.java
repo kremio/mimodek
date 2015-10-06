@@ -42,6 +42,7 @@ package mimodek2.facade;
 
  */
 
+import mimodek2.Configurator;
 import processing.core.PApplet;
 
 // TODO: Auto-generated Javadoc
@@ -64,6 +65,9 @@ public class FacadeFactory {
 	/** The Constant FULL_WINDOW. */
 	public static final int MINI_PAL = 3;
 	
+	/** The Constant FULL_WINDOW. */
+	public static final int SCALED = 4;
+	
 	/**
 	 * Configure a Media Lab Prado Media Facade.
 	 *
@@ -79,9 +83,16 @@ public class FacadeFactory {
 			return createProcessingFacade(app);
 		case MINI_PAL:
 			return createMiniPalFacade(app);
+		case SCALED:
+			return createScaledFacade(app);
 		default:
 			return createProcessingFacade(app);
 		}
+	}
+
+	private static Facade createScaledFacade(PApplet app) {
+		currentFacade = new ScaledFacade(app, Configurator.getIntegerSetting("SURFACE_WIDTH_INT"), Configurator.getIntegerSetting("SURFACE_HEIGHT_INT"));
+		return currentFacade;
 	}
 
 	public static Facade createMiniPalFacade(PApplet app) {

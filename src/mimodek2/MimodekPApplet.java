@@ -9,24 +9,29 @@ import processing.core.*;
 
 @SuppressWarnings("serial")
 public class MimodekPApplet extends PApplet{
-	
-	
-	
+
 	private Mimodek mimodek;
 
 	public static void main(String args[]) {
-		PApplet.main(new String[] { /*"--present",*/ "mimodek2.MimodekPApplet" });
+		Configurator.createConfigurator( new PApplet() );
+		Configurator.loadFromFile("settings/settings.xml");
+		Verbose.speak = Configurator.getBooleanSetting("DEBUG_FLAG");
+		
+		if( Configurator.getBooleanSetting("FULLSCREEN_FLAG") )
+			PApplet.main(new String[] { "--present", "mimodek2.MimodekPApplet" });
+		else
+			PApplet.main(new String[] { "mimodek2.MimodekPApplet" });
 	}
 
 	public void setup() {
-		size(960,540, P3D);
+		size(Configurator.getIntegerSetting("WINDOW_WIDTH_INT"), Configurator.getIntegerSetting("WINDOW_HEIGHT_INT"), P3D);
 		
 		// Writing to the depth buffer is disabled to avoid rendering
 		// artifacts due to the fact that the particles are semi-transparent
 		// but not z-sorted.
 		//hint(DISABLE_DEPTH_MASK);
 		
-		mimodek = new Mimodek((PApplet)this, FacadeFactory.FULL_WINDOW);
+		mimodek = new Mimodek((PApplet)this, Configurator.getIntegerSetting("FACADE_TYPE_IN"));
 		
 	}
 

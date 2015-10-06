@@ -118,6 +118,9 @@ public class Configurator {
 		 */
 		Configurator.setSetting("SCREEN_SHOT_SCALING_INT",1,"Define the scaling factor used when writting the frames to disk.");
 		Configurator.setSetting("GLOBAL_SCALING",1f,"Useful to magnify/shrink the image, leave to 1 when Mimodek is on display or when fiming in PAL");
+		Configurator.setSetting("FULLSCREEN_FLAG", false, "True to launch mimodek in fullscreen");
+		Configurator.setSetting("WINDOW_WIDTH_INT",960,"The width of the window when displaying in FULLSCREEN");
+		Configurator.setSetting("WINDOW_HEIGHT_INT",640,"The height of the window when displaying in FULLSCREEN");
 		
 		/*
 		 * Debug/filming settings
@@ -132,8 +135,9 @@ public class Configurator {
 		/*
 		 * Setup the display type
 		 */
-		Configurator.setSetting("FACADE_TYPE_INT",FacadeFactory.PRADO_FACADE,"Set which type of display to use. (PRADO_FACADE)1: Medialab Prado facade, (FULL_WINDOW)2: The size of the Processing sketch, (MINIPAL)3: Half the size of the PAL format");
-		
+		Configurator.setSetting("FACADE_TYPE_INT",FacadeFactory.FULL_WINDOW,"Set which type of display to use. (PRADO_FACADE)1: Medialab Prado facade, (FULL_WINDOW)2: The size of the Processing sketch, (MINIPAL)3: Half the size of the PAL format");
+		Configurator.setSetting("SURFACE_WIDTH_INT", 940,"");
+		Configurator.setSetting("SURFACE_HEIGHT_INT", 640,"");
 		
 		/*
 		 * Textures settings.
