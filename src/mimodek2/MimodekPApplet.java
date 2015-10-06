@@ -24,6 +24,8 @@ public class MimodekPApplet extends PApplet{
 	}
 
 	public void setup() {
+		if(Configurator.getBooleanSetting("FULLSCREEN_FLAG"))
+			((javax.swing.JFrame) frame).getContentPane().setBackground(new java.awt.Color(0,0,0));
 		size(Configurator.getIntegerSetting("WINDOW_WIDTH_INT"), Configurator.getIntegerSetting("WINDOW_HEIGHT_INT"), P3D);
 		
 		// Writing to the depth buffer is disabled to avoid rendering
@@ -37,7 +39,7 @@ public class MimodekPApplet extends PApplet{
 
 	public void draw() {
 		mimodek.callAfterRender();
-		background( .33f );
+		background( Configurator.getBooleanSetting("FULLSCREEN_FLAG") ? 0 :.33f );
 		mimodek.update();
 		mimodek.draw();
 		
