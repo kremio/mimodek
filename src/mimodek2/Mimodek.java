@@ -367,8 +367,8 @@ public class Mimodek implements OscMessageListener {
 		//Render the food
 		if (foods.size() > 0) {
 			app.shader(Renderer.getFoodShader(), PApplet.POINTS);
-			for (Food food: foods)
-				Renderer.render(app.g, food);
+			for (int f = 0; f < foods.size(); f++)
+				Renderer.render(app.g, foods.get(f));
 		}
 		
 		app.popMatrix();
