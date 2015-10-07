@@ -47,7 +47,7 @@ public class Leaf extends Cell {
 	public static boolean usePollutionData = true;
 
 	/** The pollution interpolator. */
-	public static PollutionDataInterpolator pollutionInterpolator;
+	public static HumidityDataInterpolator humidityInterpolator;
 
 	/** The temperature interpolator. */
 	public static DataInterpolator temperatureInterpolator;
@@ -251,6 +251,7 @@ public class Leaf extends Cell {
 		
 		carrierB = Lightie.getIdleLightie();
 		if( carrierB == null){ //no free lighties to carry the leaf away
+			carrierA = null;
 			toBePickedUp.add(this);
 			return false;
 		}
@@ -302,11 +303,13 @@ public class Leaf extends Cell {
 	 * @return the creature target position
 	 */
 	PVector getCreatureTargetPosition(Lightie c) {
-		if (carrierA == null || carrierB == null)
+		if (carrierA == null || carrierB == null){
 			return null;
+		}
 		
-		if( c.id != carrierA.id && c.id != carrierB.id )
+		if( c.id != carrierA.id && c.id != carrierB.id ){
 			return null;
+		}
 		
 		if (carrierA.readyToLift && carrierB.readyToLift) {
 			if (dropMeAtA == null && dropMeAtB == null) {
@@ -416,7 +419,7 @@ public class Leaf extends Cell {
 				color = TemperatureColorRanges.getColor(TemperatureColorRanges
 						.getHigherTemperature(temperatureInterpolator.getInterpolatedValue()));
 			} else {
-				color = TemperatureColorRanges.getColor(pollutionInterpolator.getInterpolatedValue());
+				color = TemperatureColorRanges.getColor(humidityInterpolator.getInterpolatedValue());
 			}
 
 			if (PApplet.abs(nextOffsetBrightness - currentBrightness) < 0.005f) {
@@ -546,9 +549,9 @@ public class Leaf extends Cell {
 	public static ArrayList<Leaf> unRootLeaves(){
 		ArrayList<Leaf> rootCells = new ArrayList<Leaf>();
 		//Update the levels and collect all root cells
-		for(Leaf cellB : Mimodek.leavesCells){
-			if( cellB.isLeafOffCellA() && ((CellA)cellB.anchor).level == 0 ){
-				rootCells.add(cellB);
+		for(Leaf leaf : Mimodek.leavesCells){
+			if( leaf.carrierA == null && leaf.carrierB == null && leaf.isLeafOffCellA() && ((CellA)leaf.anchor).level < 1.0f ){
+				rootCells.add(leaf);
 			}
 		}
 		

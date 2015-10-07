@@ -42,6 +42,7 @@ public class OSCom implements OscEventListener{
 	}
 
 	public void oscEvent(OscMessage message) {
+
 		String address = message.addrPattern();
 		if( ! messageListeners.containsKey( address ) )
 			return;

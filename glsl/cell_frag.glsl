@@ -24,7 +24,7 @@ void main() {
     //Apply the alpha mask
     vec4 colorFromTexture = vec4( depthOnly ? vec3(1.0) : texture2D(theTexture, vertTexCoord.st).rgb, texture2D(mask, vertTexCoord.st).a);
 //Multiply with the per vertex colour to tint the texture
-    gl_FragColor = colorFromTexture * (depthOnly ? vec4(1.0) : cellColor) * depth;
+    gl_FragColor = colorFromTexture * (depthOnly ? vec4(1.0) : vec4(cellColor.rgb * depth, cellColor.a) ) ;
 /*
   }else{
     vec4 colorFromTexture = vec4(vec3(depth), texture2D(mask, vertTexCoord.st).a);

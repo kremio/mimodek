@@ -191,6 +191,7 @@ public class Configurator {
 		Configurator.setSetting("CREATURE_STEER_FORCE",0.05f,"Controls how sharp the creatures turn.");
 		Configurator.setSetting("CREATURE_DIM_THRESHOLD_INT",5,"When the number of creatures reach this threshold, their alpha is divided by 2.");
 		Configurator.setSetting("CREATURE_MAX_COUNT_INT",25,"The maximum number of creatures that can be ative at the same time.");
+		Configurator.setSetting("LIGHT_MAX_RADIUS", 24f, "Controls the size of the halo.");
 		
 		/*
 		 * Food settings

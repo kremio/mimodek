@@ -329,7 +329,7 @@ public class Renderer {
 	}
 	
 	public static void renderLight(PGraphics renderBuffer, Lightie creature){
-		float radius = PApplet.min(32f, creature.pos.z * 32f);
+		float radius = PApplet.min(Configurator.getFloatSetting("LIGHT_MAX_RADIUS"), creature.pos.z * Configurator.getFloatSetting("LIGHT_MAX_RADIUS"));
 
 		if( radius <= 0f)
 			return;

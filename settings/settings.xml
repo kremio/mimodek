@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <mimodeksettings>
 <setting name="AUTO_START_FLAG" description="Set to true to start running Mimodek right after the program has loaded.">true</setting>
+<setting name="AUTO_FOOD" description="Feed the growth every frame if true">false</setting>
 <setting name="CELLA_ALPHA" description="Range between 0f and 1f. The alpha component of the hard cells color.">1.0</setting>
 <setting name="CELLA_B" description="Range between 0f and 1f. The blue component of the hard cells color.">0.0</setting>
 <setting name="CELLA_DISTANCE_BETWEEN" description="Range between 0f and 1f. Controls of far appart the hard cells should be of each others. 0f means that they all share the same center, 1f and the distance between them is the sum of their radius.">0.5</setting>
@@ -41,7 +42,7 @@
 <setting name="DATA_TEMPERATURE" description="The current temperature. This is set at runtime, but you can specify a default value.">27.519997</setting>
 <setting name="DEBUG_FLAG" description="Toggle debug message.">true</setting>
 <setting name="FACADE_TYPE_INT" description="Set which type of display to use. (PRADO_FACADE)1: Medialab Prado facade, (FULL_WINDOW)2: The size of the Processing sketch, (MINIPAL)3: Half the size of the PAL format">2</setting>
-<setting name="FAKE_DATA_FLAG" description="Set to true to control the data value from the UI.">true</setting>
+<setting name="FAKE_DATA_FLAG" description="Set to true to control the data value from the UI.">false</setting>
 <setting name="FOOD_B" description="Range between 0f and 1f. The blue component of the food color.">1.0</setting>
 <setting name="FOOD_G" description="Range between 0f and 1f. The green component of the food color.">1.0</setting>
 <setting name="FOOD_R" description="Range between 0f and 1f. The red component of the food color.">1.0</setting>
@@ -66,6 +67,6 @@ _STR" description="The name of the image to use as a board">facade text</setting
 <setting name="WORDPRESS_URL_STR" description="URL of the blog.">http://mimodek.medialab-prado.es/</setting>
 <setting name="WU_API_KEY_STR" description="Key for the Weather Underground API">0a37afab349f03e3</setting>
 <setting name="FULLSCREEN_FLAG" description="True to launch mimodek in fullscreen">true</setting>
-<setting name="WINDOW_WIDTH_INT" description="The width of the window when using Facade type FULL_WINDOW">960</setting>
-<setting name="WINDOW_HEIGHT_INT" description="The height of the window when using Facade type FULL_WINDOW">640</setting>
+<setting name="WINDOW_WIDTH_INT" description="The width of the window when using Facade type FULL_WINDOW">1280</setting>
+<setting name="WINDOW_HEIGHT_INT" description="The height of the window when using Facade type FULL_WINDOW">800</setting>
 </mimodeksettings>

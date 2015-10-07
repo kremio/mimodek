@@ -149,7 +149,7 @@ public class Lightie extends Cell {
 		lastUpdate = System.currentTimeMillis();
 
 		if (hasFood) {
-			Cell root = Mimodek.aCells.get(0);
+			Cell root = CellA.getRandomCell().getRootCell();
 			if (pos.dist(root.pos) < 5) {
 
 				Mimodek.genetics.addFood();
@@ -215,7 +215,7 @@ public class Lightie extends Cell {
 						lastFoodPos = f;
 						Mimodek.foods.remove(f);
 						Mimodek.foodAvg.sub(f);
-						Cell root = Mimodek.aCells.get(0);
+						Cell root = CellA.getRandomCell().getRootCell();
 						seek(root.pos);
 						// directionAngle =
 						// PApplet.atan2(root.pos.y-pos.y,root.pos.x-pos.x);

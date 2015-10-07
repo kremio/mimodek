@@ -181,14 +181,11 @@ public class Mimodek implements OscMessageListener {
 		Leaf.createShape( app.g, app.loadImage("textures/softcell.png"));
 		
 		// create and register data interpolators
-		CellA.humidityInterpolator = new DataInterpolator("DATA_HUMIDITY",
-				dataHandler);
-		CellA.temperatureInterpolator = new TemperatureDataInterpolator(
-				dataHandler);
+//		CellA.humidityInterpolator = new DataInterpolator("DATA_HUMIDITY", dataHandler);
+		CellA.temperatureInterpolator = new TemperatureDataInterpolator(dataHandler);
 		
-		Leaf.pollutionInterpolator = new PollutionDataInterpolator(dataHandler);
-		Leaf.temperatureInterpolator = new DataInterpolator(
-				"DATA_TEMPERATURE", dataHandler);
+		Leaf.humidityInterpolator = new HumidityDataInterpolator(dataHandler);
+		Leaf.temperatureInterpolator = new DataInterpolator("DATA_TEMPERATURE", dataHandler);
 		dataHandler.start();
 		
 		//set zero state
@@ -222,7 +219,7 @@ public class Mimodek implements OscMessageListener {
 		updateThread = new Thread(new UpdateRunnable( ));
 		updateThread.start();
 		
-		oscCommunication.addListener("/mimodek/activity/", this);
+		oscCommunication.addListener("/mimodek/blobs/", this);
 		
 		
 	}
@@ -257,10 +254,11 @@ public class Mimodek implements OscMessageListener {
 			leaf.makeEdible();
 		}
 		
-		if ( Configurator.getBooleanSetting("AUTO_FOOD") ) {
+		/*if ( Configurator.getBooleanSetting("AUTO_FOOD") ) {
 			//randomly add food
-			//genetics.addFood();
+			genetics.addFood();
 		}
+		*/
 		
 		
 
@@ -424,10 +422,10 @@ public class Mimodek implements OscMessageListener {
 		if (leaves.size() > 0){
 			
 			Renderer.setUniforms(leavesCells.get(0));
-			for (Leaf cellB : leaves){
-				if( cellB.moving || cellB.edible )
+			for (Leaf leaf : leaves){
+				if( leaf.moving || leaf.edible )
 					continue;
-				Renderer.render(renderBuffer, cellB);
+				Renderer.render(renderBuffer, leaf);
 			}
 		}
 		
@@ -520,6 +518,7 @@ public class Mimodek implements OscMessageListener {
 			app.text("Leaves:" + leaves.size(), 20, 130, 1);
 			app.text("Creatures:" + lighties.size(), 20, 150, 1);
 			app.text("Osc:"+lastOscData, 20, 180);
+			app.text("Spread:"+CellA.spreadFactor, 20, 210);
 		}
 		
 		//Run callback, if any
@@ -619,12 +618,24 @@ public class Mimodek implements OscMessageListener {
 	 * Handle activity data coming from the Kinect app through an OSC channel
 	 */
 	public void handleMessage(OscMessage message) {
-		if( message.arguments().length == 1)
-			lastOscData = message.get(0).floatValue();
+		//System.out.println(message.arguments().length);
+		if(  message.arguments().length != 2)
+			return;
+		
+		
+		
+		int blobCount = message.get(0).intValue();
+		lastOscData = blobCount;
+		
+		float blobDistance = message.get(1).floatValue();
+		CellA.spreadFactorTween.restart(1f - blobDistance);
+		
 		//If the activity is high enough add some food
-		if( message.arguments().length == 1 /*&& message.get(0).floatValue() > Configurator.getFloatSetting("ACTIVITY_THRESHOLD_FLOAT")*/ ){
+		if( blobCount > 0 /*&& message.get(0).floatValue() > Configurator.getFloatSetting("ACTIVITY_THRESHOLD_FLOAT")*/ ){
 			genetics.addFood();
-			Food.dropFood( (float)Math.random() * FacadeFactory.getFacade().width, (float)Math.random() * FacadeFactory.getFacade().height);
+			while(blobCount-- > 0){
+				Food.dropFood( (float)Math.random() * FacadeFactory.getFacade().width, (float)Math.random() * FacadeFactory.getFacade().height);
+			}
 		}
 		
 	}

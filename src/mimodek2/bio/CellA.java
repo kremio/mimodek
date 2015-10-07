@@ -76,7 +76,8 @@ public class CellA extends Cell {
 	public static DataInterpolator temperatureInterpolator;
 	
 	/** The humidity interpolator. */
-	public static DataInterpolator humidityInterpolator;
+	public static Tween spreadFactorTween = new Tween(CellA.class, "spreadFactor", 0.25f, 1000);
+	public static float spreadFactor = 0;
 	
 	public static PImage texture;
 	
@@ -186,7 +187,7 @@ public class CellA extends Cell {
 		if(anchor!=null){
 			//apply angular movement
 			aa = angleToAnchor + angularMovement* PApplet.sin(PApplet.radians(app.frameCount + level));
-			float distanceBetween = 0.42f+(humidityInterpolator.getInterpolatedValue()/100f)*(0.75f-0.42f);
+			float distanceBetween = 0.42f+(spreadFactor)*(0.75f-0.42f);
 			pos.x = anchor.pos.x + (radius()+anchor.radius())* distanceBetween * PApplet.cos(aa);
 			pos.y = anchor.pos.y + (radius()+anchor.radius())* distanceBetween * PApplet.sin(aa);
 		}
