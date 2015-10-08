@@ -63,6 +63,8 @@ public class Lightie extends Cell {
 
 	/** The food sight. */
 	public PVector foodSight;
+	
+	private CellA cellToFeed;
 
 	public HashMap<String, Object> getState() {
 		HashMap<String, Object> state = super.getState();
@@ -133,134 +135,154 @@ public class Lightie extends Cell {
 		energy = 1f;
 	}
 
+	private void bringFoodBack(){
+		//Bring the food back to one of the root cells
+		if( cellToFeed == null || cellToFeed.level < 1.0f) //make sure the cell still exists
+			cellToFeed = CellA.getRandomCell().getRootCell();
+		
+		if (pos.dist(cellToFeed.pos) < 5) {
+
+			Mimodek.genetics.addFood();
+			hasFood = false;
+			seek(lastFoodPos);
+			lastFoodPos = null;
+		} else {
+			seek(cellToFeed.pos);
+			// drop some scent
+			Mimodek.scentMap.addScent(pos.x - 5, pos.y - 5, 10, 10, 0.2f, lastFoodPos);
+		}
+	}
+	
+	private void removeLeaf(){
+		if (leaf.edible) {
+			// go move a b cell
+			if (leaf.pos.dist(pos) < 5f) {
+				// eat
+				float amount = leaf.maturity >= 1f - energy ? 1f - energy : leaf.maturity;
+				leaf.maturity -= amount;
+				energy += amount;
+				leaf = null;
+			} else {
+				seek(leaf.pos);
+			}
+		} else {
+			PVector tPos = leaf.getCreatureTargetPosition(this);
+			if (tPos == null) {
+				leaf = null;
+			} else if (!leaf.moving) {
+				if (tPos.dist(pos) < 5f) {
+					readyToLift = true;
+				} else {
+					seek(tPos);
+				}
+			} else {
+				// move the cell out of the way
+				if (this == leaf.carrierB) {
+					leaf.startToLift(this);
+				}
+				if (tPos.dist(pos) < 10f) {
+					readyToLift = false;
+					if (!leaf.carrierA.readyToLift && !leaf.carrierB.readyToLift) {
+						// can drop the cell now
+						leaf.drop();
+					}
+				} else {
+					seek(tPos);
+				}
+			}
+		}
+	}
+	
+	private void seekFood() {
+
+		
+		// no leaf being carried
+		// look for food for the organism
+		for (int i = 0; i < Mimodek.foods.size(); i++) {
+			PVector f = Mimodek.foods.get(i);
+			if (f != null && f.dist(pos) < 5) {
+				// food has been found
+				hasFood = true;
+				lastFoodPos = f;
+				Mimodek.foods.remove(f);
+				Mimodek.foodAvg.sub(f);
+				//Cell root = CellA.getRandomCell().getRootCell();
+				//seek(root.pos);
+				// directionAngle =
+				// PApplet.atan2(root.pos.y-pos.y,root.pos.x-pos.x);
+				return;
+			}
+		}
+		
+		// if we are very close to the food we saw before and it has
+		// Disappeared, look for another piece
+		if (foodSight != null) {
+			if (pos.dist(foodSight) < 5f)
+				foodSight = null;
+			else
+				seek(foodSight);
+			return;
+		}
+		
+		//Keep searching
+		float directionAngle = PApplet.atan2(vel.y, vel.x);
+		float cD = smellAround(directionAngle);
+		if (cD == directionAngle) {
+			float dist = 1000;
+			PVector tmp = new PVector(pos.x, pos.y);
+			for (int i = 0; i < Mimodek.foods.size(); i++) {
+				PVector f = Mimodek.foods.get(i);
+				float distT = pos.dist(f);
+				if (distT < 50 && distT < dist) {
+					dist = distT;
+					tmp = f;
+				}
+			}
+			if (dist < 1000) {
+				foodSight = tmp;
+				seek(tmp);
+			} else if (Math.random() > 0.8) {
+				seek(new PVector((float) (Math.random() * FacadeFactory.getFacade().width), (float) Math.random()
+						* FacadeFactory.getFacade().height));
+
+			}
+			return;
+		}
+		//The steering direction has changed
+		acc.add(new PVector(PApplet.cos(cD), PApplet.sin(cD)));
+	}
+	
 	/**
 	 * Update.
 	 */
 	public void update() {
 		long timeSinceUpdate = System.currentTimeMillis() - lastUpdate;
+		lastUpdate = System.currentTimeMillis();
+		
 		// deplete energy every 2 seconds (2000 millis)
-		if (leaf == null || leaf.edible)
+		if ( !amIBusy() )
 			energy -= (timeSinceUpdate / 2000f) * 0.03f;
 		
 		if (energy <= 0f) {// it's dead...
 			return;
 		}
 
-		lastUpdate = System.currentTimeMillis();
 
 		if (hasFood) {
-			Cell root = CellA.getRandomCell().getRootCell();
-			if (pos.dist(root.pos) < 5) {
-
-				Mimodek.genetics.addFood();
-				hasFood = false;
-				seek(lastFoodPos);
-				lastFoodPos = null;
-			} else {
-				seek(root.pos);
-				// drop some scent
-				Mimodek.scentMap.addScent(pos.x - 5, pos.y - 5, 10, 10, 0.2f, lastFoodPos);
-			}
+			bringFoodBack();
 		} else {
 			// when energy is half full, seek for cell B to eat
-			if (energy < 0.5f && leaf == null) {
+			if (leaf == null && energy < 0.5f) {
 				leaf = Leaf.getEatableCell();
 			}
 
-			if (leaf != null) { // Found something to eat
-				if (leaf.edible) {
-					// go move a b cell
-					if (leaf.pos.dist(pos) < 5f) {
-						// eat
-						float amount = leaf.maturity >= 1f - energy ? 1f - energy : leaf.maturity;
-						leaf.maturity -= amount;
-						energy += amount;
-						leaf = null;
-					} else {
-						seek(leaf.pos);
-					}
-				} else {
-					PVector tPos = leaf.getCreatureTargetPosition(this);
-					if (tPos == null) {
-						leaf = null;
-					} else if (!leaf.moving) {
-						if (tPos.dist(pos) < 5f) {
-							readyToLift = true;
-						} else {
-							seek(tPos);
-						}
-					} else {
-						// move the cell out of the way
-						if (this == leaf.carrierB){
-							leaf.startToLift(this);
-						}
-						if (tPos.dist(pos) < 10f) {
-							readyToLift = false;
-							if (!leaf.carrierA.readyToLift && !leaf.carrierB.readyToLift) {
-								// can drop the cell now
-								leaf.drop();
-							}
-						} else {
-							seek(tPos);
-						}
-					}
-				}
-			} else {
-				// look for food for the organism
-				for (int i = 0; i < Mimodek.foods.size(); i++) {
-					PVector f = Mimodek.foods.get(i);
-					if (f != null && f.dist(pos) < 5) {
-						// food has been found
-						hasFood = true;
-						lastFoodPos = f;
-						Mimodek.foods.remove(f);
-						Mimodek.foodAvg.sub(f);
-						Cell root = CellA.getRandomCell().getRootCell();
-						seek(root.pos);
-						// directionAngle =
-						// PApplet.atan2(root.pos.y-pos.y,root.pos.x-pos.x);
-						break;
-					}
-				}
+			if (leaf != null) { // I am carrying a leaf
+				removeLeaf();
+			}else{
+				seekFood(); //look for food
 			}
 		}
 
-		if (leaf == null && !hasFood) {
-
-			// if we are very close to the food we saw before and it has
-			// Disappeared, look for another piece
-			if (foodSight != null) {
-				if (pos.dist(foodSight) < 5f)
-					foodSight = null;
-				else
-					seek(foodSight);
-			} else {
-				float directionAngle = PApplet.atan2(vel.y, vel.x);
-				float cD = smellAround(directionAngle);
-				if (cD == directionAngle) {
-					float dist = 1000;
-					PVector tmp = new PVector(pos.x, pos.y);
-					for (int i = 0; i < Mimodek.foods.size(); i++) {
-						PVector f = Mimodek.foods.get(i);
-						float distT = pos.dist(f);
-						if (distT < 50 && distT < dist) {
-							dist = distT;
-							tmp = f;
-						}
-					}
-					if (dist < 1000) {
-						foodSight = tmp;
-						seek(tmp);
-					} else if (Math.random() > 0.8) {
-						seek(new PVector((float) (Math.random() * FacadeFactory.getFacade().width),
-								(float) Math.random() * FacadeFactory.getFacade().height));
-
-					}
-				} else {
-					acc.add(new PVector(PApplet.cos(cD), PApplet.sin(cD)));
-				}
-			}
-		}
 
 		// Apply separation rule
 		if (leaf != null && leaf.moving) {
@@ -473,6 +495,7 @@ public class Lightie extends Cell {
 	 * @return the creature
 	 */
 	public static Lightie spawn() {
+		
 		Cell root = CellA.getRandomCell().getRootCell();
 		
 		PVector pos = new PVector(root.pos.x + (-25.0f + (float) Math.random() * 50f), root.pos.y

@@ -76,7 +76,7 @@ public class CellA extends Cell {
 	public static DataInterpolator temperatureInterpolator;
 	
 	/** The humidity interpolator. */
-	public static Tween spreadFactorTween = new Tween(CellA.class, "spreadFactor", 0.25f, 1000);
+	public static Tween spreadFactorTween = new Tween(CellA.class, "spreadFactor", 0.25f, 10000);
 	public static float spreadFactor = 0;
 	
 	public static PImage texture;

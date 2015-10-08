@@ -202,6 +202,7 @@ public class Configurator {
 		Configurator.setSetting("FOOD_B",1f,"Range between 0f and 1f. The blue component of the food color.");
 		Configurator.setSetting("FOOD_SCENT_EVAPORATION",0.1f,"How fast the creatures pheromones evaporate.");
 		Configurator.setSetting("FOOD_MAX",100,"How many food pieces can be shown at any time.");
+		Configurator.setSetting("MAX_FOOD_FLOW_INT",5,"How many food pieces can be shown at any time.");
 		
 		/*
 		 * Data controls

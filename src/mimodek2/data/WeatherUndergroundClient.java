@@ -93,7 +93,7 @@ public class WeatherUndergroundClient {
 			return jsonObject.hasKey("current_observation");
 			
 		}catch(Exception e){
-			e.printStackTrace();
+			//e.printStackTrace();
 			return false;
 		}
 
@@ -145,7 +145,7 @@ public class WeatherUndergroundClient {
 			return true;
 			
 		}catch(Exception e){
-			e.printStackTrace();
+			//e.printStackTrace();
 			return false;
 		}
 	

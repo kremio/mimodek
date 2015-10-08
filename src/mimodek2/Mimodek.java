@@ -61,7 +61,7 @@ public class Mimodek implements OscMessageListener {
 	public PImage cellsAPass;
 	
 	/* JS Console */
-	public JSConsole jsConsole;
+	public static JSConsole jsConsole;
 	
 	public static int lastFpsCheck = 100;
 	
@@ -80,11 +80,22 @@ public class Mimodek implements OscMessageListener {
 	
 	private static float lastOscData = 0;
 	
+	private static int foodPile = 0;
+	
+	public static String myLocalIP = "";
+	
 	class UpdateRunnable implements Runnable{
 		
 		public void run() {
 			while(true){
 				scentMap.update();
+				
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+				
 			}
 		}
 		
@@ -117,7 +128,9 @@ public class Mimodek implements OscMessageListener {
 	
 	public Mimodek(PApplet app, int facadeType){
 		Mimodek.app = app;
-		
+		app.textureMode(PApplet.NORMAL);
+		app.colorMode(PApplet.RGB, 1.0f);
+		app.strokeCap(PApplet.SQUARE);
 		
 		// setup facade
 		FacadeFactory.createFacade(facadeType, app).border = 10f;
@@ -125,10 +138,7 @@ public class Mimodek implements OscMessageListener {
 		renderBuffer = app.createGraphics(FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, PApplet.P3D);
 		backgroundBuffer = app.createGraphics(FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, PApplet.P3D);
 		
-		app.textureMode(PApplet.NORMAL);
-		app.colorMode(PApplet.RGB, 1.0f);
-		app.strokeCap(PApplet.SQUARE);
-		//app.imageMode(PApplet.CENTER);
+		
 		
 		// load color range
 		try{
@@ -136,20 +146,11 @@ public class Mimodek implements OscMessageListener {
 		}catch(Exception e){
 			Verbose.overRule(e.getMessage());
 		}
+	
 		
 		
 		
-		// tracking client
-		//tuioClient = new TUIOClient(app);
-		//tuioClient.setListener(this);
-		
-		//OSC
-		oscCommunication = new OSCom(3000, "localhost", 3001);
-		
-		
-		// Test that we can get a weather station for this location
-		// NOTE: this test has a side effect of setting the starting values for
-		// the weather variable, neat!
+		//Setup online weather data source
 		MimodekLocation location = new MimodekLocation();
 		location.city = Configurator.isSettingSet("LOCATION_CITY_STR") ? Configurator
 				.getStringSetting("LOCATION_CITY_STR") : null;
@@ -159,26 +160,13 @@ public class Mimodek implements OscMessageListener {
 				.getFloatSetting("LOCATION_LATITUDE") : null;
 		location.longitude = Configurator.isSettingSet("LOCATION_LONGITUDE") ? Configurator
 				.getFloatSetting("LOCATION_LONGITUDE") : null;
-		Verbose.overRule("Hello " + location + "!");
-
-		try{
-			DataHandler.testDataSource(app, location);	
-			// data update thread
-			dataHandler = DataHandler.getInstance(location, app);
-		}catch(Exception e){
-			e.printStackTrace();
-			//Verbose.debug("No weather station has been found for "+location+". Try the closest biggest city perhaps? \nMimodek will stop.");
-			System.exit(0);
-			//app.exit(); // no weather station so Mimodek can't run, too bad....
-		}
+		Verbose.overRule("Hello " + location + "!");		
+		
+		dataHandler = DataHandler.getInstance(location, app);
 		/* Setup data to configuration mapping */
 		// in the future, more variables could be mapped
 		dataHandler.map("temp_c", "DATA_TEMPERATURE");
 		dataHandler.map("relative_humidity", "DATA_HUMIDITY");
-		
-		// Create geometries
-		CellA.createShape( app.g, app.loadImage("textures/hardcell.png"));
-		Leaf.createShape( app.g, app.loadImage("textures/softcell.png"));
 		
 		// create and register data interpolators
 //		CellA.humidityInterpolator = new DataInterpolator("DATA_HUMIDITY", dataHandler);
@@ -186,7 +174,10 @@ public class Mimodek implements OscMessageListener {
 		
 		Leaf.humidityInterpolator = new HumidityDataInterpolator(dataHandler);
 		Leaf.temperatureInterpolator = new DataInterpolator("DATA_TEMPERATURE", dataHandler);
-		dataHandler.start();
+		
+		// Create geometries
+		CellA.createShape( app.g, app.loadImage("textures/hardcell.png"));
+		Leaf.createShape( app.g, app.loadImage("textures/softcell.png"));
 		
 		//set zero state
 		reset();
@@ -218,10 +209,12 @@ public class Mimodek implements OscMessageListener {
 		
 		updateThread = new Thread(new UpdateRunnable( ));
 		updateThread.start();
+		dataHandler.start();
 		
+		//OSC
+		oscCommunication = new OSCom(3000, "localhost", 3001);
+		myLocalIP = oscCommunication.getLocalIP();
 		oscCommunication.addListener("/mimodek/blobs/", this);
-		
-		
 	}
 	
 	
@@ -237,6 +230,7 @@ public class Mimodek implements OscMessageListener {
 	 * Update.
 	 */
 	public void update() {
+		
 		Tween.updateTweens();
 		
 		//True death loop
@@ -254,13 +248,15 @@ public class Mimodek implements OscMessageListener {
 			leaf.makeEdible();
 		}
 		
-		/*if ( Configurator.getBooleanSetting("AUTO_FOOD") ) {
-			//randomly add food
+		//Feed the beast
+		while(foodPile-- > 0)
 			genetics.addFood();
+		
+		/*
+		if ( Configurator.getBooleanSetting("AUTO_FOOD") ) {
+			foodPile++;
 		}
 		*/
-		
-		
 
 		// Update cells
 		for (int c = 0; c < allCells.size(); c++)
@@ -298,27 +294,8 @@ public class Mimodek implements OscMessageListener {
 		 * 
 		 */
 		//Wait a few frames to get a more accurate fps reading
-		if(app.frameCount > lastFpsCheck && app.frameRate < 25f){
-			
-			
-			//First, let's try to et rid of some idle Lighties
-			/*
-			Lightie idleLightie = null;
-			for(Lightie lightie : lighties){
-				if( !lightie.amIBusy() ){ //that one is doing nothing!
-					idleLightie = lightie;
-					break;
-				}
-			}
-			
-			//Find someone to hunt it down
-			if( idleLightie != null ){
-				for(HighLightie hunter : highLighties)
-					hunter.huntTarget(idleLightie);
-				return;
-			}
-			*/
-			
+		if(aCells.size() > 20 && app.frameCount > lastFpsCheck && app.frameRate < 25f){
+		
 			lastFpsCheck = app.frameCount + 100;
 			//Let's trim the structure a bit
 			CellA.unRootCells();
@@ -337,192 +314,23 @@ public class Mimodek implements OscMessageListener {
 		//First check if some cells are done fading
 		ArrayList<CellA> rootCells = new ArrayList<CellA>();
 		ArrayList<Leaf> rootLeaves = Leaf.unRootLeaves();
+		
 		for(int c = 0; c < cellsToFossilize.size(); c++){
 			CellA rootCell = cellsToFossilize.get(c);
 			if(rootCell.level <= 0.5f){
 				rootCells.add(rootCell);
 				cellsToFossilize.remove(c);
-				new Tween(rootCell, "level", 0f, 5*60000);
+				//new Tween(rootCell, "level", 0f, 5*60000);
 			}
 		}
+		
+		
 		
 		
 		//System.out.println("Removed one cell and "+rootLeaves.size()+" leaves.");
 		
 		//remove them from the active cells, with their bCells and draw to background
 		drawToBackground( rootCells, rootLeaves );
-	}
-	
-	public void draw(){
-		
-		float time = app.millis();
-		
-		app.blendMode(PApplet.BLEND);
-		
-		
-		//Init global drawing parameters
-		renderBuffer.beginDraw();
-		renderBuffer.hint(PApplet.DISABLE_DEPTH_MASK);
-		renderBuffer.textureMode(PApplet.NORMAL);
-		renderBuffer.colorMode(PApplet.RGB, 1.0f);
-		renderBuffer.strokeCap(PApplet.SQUARE);
-		
-		renderBuffer.ortho(); //camera
-		renderBuffer.background(0,0); //clear previous frame
-		
-		
-		
-		
-		Navigation.applyTransform(renderBuffer); //set global transform
-		
-		
-		/*
-		 * Layout (from bottom to top):
-		 * - food
-		 * - dead leafs
-		 * - leafs
-		 * - cells
-		 * - carried leaf
-		 * - creatures
-		 */
-		
-		
-		/* Render the stems */
-		if( leavesCells.size() > 0 ){
-			for (Leaf cellB : leavesCells){
-				if( cellB.moving || cellB.edible){ //sort the leaves
-					if( cellB.moving ){
-						carriedLeaves.add( cellB );
-					}else{
-						deadLeaves.add( cellB );
-					}
-					continue; //only render the stems under the A Cells if the leaf is not being carried
-				}
-				leaves.add( cellB );
-				Renderer.renderWithoutShader( renderBuffer, cellB );
-			}
-		}
-		
-		/* Render the cells */
-		renderBuffer.shader( Renderer.getCellShader() );		
-		
-		if (aCells.size() > 0) {
-			
-			Renderer.setUniforms(aCells.get(0));
-			
-			for (CellA cellA: aCells){
-				if(cellA.level <= 0.5f) //only used has space holder
-					continue;
-				Renderer.setTime( (time+cellA.id*10f)/1000f * 0.5f );
-				Renderer.render(renderBuffer, cellA);
-				
-			}
-		}
-		
-		if (leaves.size() > 0){
-			
-			Renderer.setUniforms(leavesCells.get(0));
-			for (Leaf leaf : leaves){
-				if( leaf.moving || leaf.edible )
-					continue;
-				Renderer.render(renderBuffer, leaf);
-			}
-		}
-		
-		/* Render the leafs being carried */
-		if (carriedLeaves.size() > 0){
-			//render stems of carried leafs
-			renderBuffer.resetShader();
-			for (Leaf cellB : carriedLeaves){
-				if( cellB.carrierA != null && cellB.carrierB != null )
-					Renderer.renderWithoutShader( renderBuffer, cellB );//only render the stems above the A Cells if the leaf is not being carried
-			}
-			
-			//render leafs
-			renderBuffer.shader( Renderer.getCellShader() );
-			for (Leaf cellB : carriedLeaves){
-				Renderer.render(renderBuffer, cellB);
-			}
-
-		}
-		
-		renderBuffer.endDraw();
-		
-		
-		/* Compose the final image from the multiple passes */
-		app.resetShader();
-		app.pushMatrix();
-		Navigation.applyTransform(app.g);
-		
-		// Draw the background
-		app.image(backgroundBuffer, 0, 0);
-		
-		//Render the dead leaves
-		if(deadLeaves.size() > 0){
-			app.shader( Renderer.getCellShader() );
-			Renderer.setUniforms(deadLeaves.get(0));
-			for(Leaf cellB : deadLeaves)
-				Renderer.render(app.g, cellB);
-		}
-		
-		//Render the food
-		if (foods.size() > 0) {
-			app.shader(Renderer.getFoodShader(), PApplet.POINTS);
-			for (int f = 0; f < foods.size(); f++)
-				Renderer.render(app.g, foods.get(f));
-		}
-		
-		app.popMatrix();
-		
-		//Render the living cells
-		app.resetShader();
-		
-		
-		app.image(renderBuffer, 0, 0);
-		
-		//Render the creatures on top of everything
-		app.pushMatrix();
-		Navigation.applyTransform(app.g);
-		
-		app.blendMode(PApplet.ADD);
-		
-		//TODO: try rendering in a buffer
-		app.tint(0.5f);
-		 
-		app.resetShader();
-
-		for (Lightie creature : lighties)
-			Renderer.renderLight(app.g, creature);
-
-		app.noTint();
-		
-		app.blendMode(PApplet.BLEND);
-		
-		app.shader( Renderer.getCreatureShader() );
-		for (Lightie creature : lighties)
-			Renderer.render(app.g, creature );
-		
-		//De-reference
-		leaves.clear();
-		deadLeaves.clear();
-		carriedLeaves.clear();
-		
-		app.popMatrix(); //Render pass end
-		
-		if(Configurator.getBooleanSetting("SHOW_DATA_FLAG")){
-			app.text("Observation at: "+WeatherUndergroundClient.getLatestTimestamp(), 20, 20, 1);
-			app.text("Temperature: "+Configurator.getFloatSetting("DATA_TEMPERATURE"), 20, 40, 1);
-			app.text("Humidity: "+Configurator.getFloatSetting("DATA_HUMIDITY"), 20, 60, 1);
-			app.text("FPS: "+app.frameRate, 20, 90, 1);
-			app.text("Cells:" + aCells.size(), 20, 110, 1);
-			app.text("Leaves:" + leaves.size(), 20, 130, 1);
-			app.text("Creatures:" + lighties.size(), 20, 150, 1);
-			app.text("Osc:"+lastOscData, 20, 180);
-			app.text("Spread:"+CellA.spreadFactor, 20, 210);
-		}
-		
-		//Run callback, if any
-		callAfterRender();
 	}
 	
 	private static void drawToBackground(ArrayList<CellA> rootCells, ArrayList<Leaf> rootLeaves) {
@@ -562,8 +370,8 @@ public class Mimodek implements OscMessageListener {
 
 			for (CellA rootCell : rootCells) {
 				// De-reference
-				// Mimodek.aCells.remove(rootCell);
-				// Mimodek.allCells.remove(rootCell);
+				Mimodek.aCells.remove(rootCell);
+				Mimodek.allCells.remove(rootCell);
 
 				Renderer.setTime((time + rootCell.id * 10f) / 1000f * 0.5f);
 				Renderer.render(backgroundBuffer, rootCell);
@@ -580,6 +388,192 @@ public class Mimodek implements OscMessageListener {
 		backgroundBuffer.resetShader();
 		backgroundBuffer.endDraw();
 	}
+	
+	public void draw(){
+
+		float time = app.millis();
+		
+		app.blendMode(PApplet.BLEND);
+		
+		
+		//Init global drawing parameters
+		renderBuffer.beginDraw();
+		renderBuffer.hint(PApplet.DISABLE_DEPTH_MASK);
+		renderBuffer.textureMode(PApplet.NORMAL);
+		renderBuffer.colorMode(PApplet.RGB, 1.0f);
+		renderBuffer.strokeCap(PApplet.SQUARE);
+		
+		renderBuffer.ortho(); //camera
+		renderBuffer.background(0,0); //clear previous frame
+		
+		
+		
+		
+		Navigation.applyTransform(renderBuffer); //set global transform
+		
+		
+		/*
+		 * Layout (from bottom to top):
+		 * - food
+		 * - dead leafs
+		 * - leafs
+		 * - cells
+		 * - carried leaf
+		 * - creatures
+		 */
+		
+		
+		/* Render the stems */
+		if( leavesCells.size() > 0 ){
+			for (int l = 0; l < leavesCells.size(); l++){
+				Leaf cellB = leavesCells.get(l);
+				if( cellB.moving || cellB.edible){ //sort the leaves
+					if( cellB.moving ){
+						carriedLeaves.add( cellB );
+					}else{
+						deadLeaves.add( cellB );
+					}
+					continue; //only render the stems under the A Cells if the leaf is not being carried
+				}
+				leaves.add( cellB );
+				Renderer.renderWithoutShader( renderBuffer, cellB );
+			}
+		}
+		
+		/* Render the cells */
+		renderBuffer.shader( Renderer.getCellShader() );		
+		
+		if (aCells.size() > 0) {
+			
+			Renderer.setUniforms(aCells.get(0));
+			
+			for (int a = 0; a < aCells.size(); a++){
+				CellA cellA = aCells.get(a);
+				if(cellA.level <= 0.5f) //only used has space holder
+					continue;
+				Renderer.setTime( (time+cellA.id*10f)/1000f * 0.5f );
+				Renderer.render(renderBuffer, cellA);
+				
+			}
+		}
+		
+		if (leaves.size() > 0){
+			
+			Renderer.setUniforms(leavesCells.get(0));
+			for (int l = 0; l < leaves.size(); l++){
+					Leaf leaf = leaves.get(l);
+				if( leaf.moving || leaf.edible )
+					continue;
+				Renderer.render(renderBuffer, leaf);
+			}
+		}
+		
+		/* Render the leafs being carried */
+		if (carriedLeaves.size() > 0){
+			//render stems of carried leafs
+			renderBuffer.resetShader();
+			for (int l = 0; l < carriedLeaves.size(); l++){
+					Leaf cellB = carriedLeaves.get(l);
+				if( cellB.carrierA != null && cellB.carrierB != null )
+					Renderer.renderWithoutShader( renderBuffer, cellB );//only render the stems above the A Cells if the leaf is not being carried
+			}
+			
+			//render leafs
+			renderBuffer.shader( Renderer.getCellShader() );
+			for (int l = 0; l < carriedLeaves.size(); l++){
+				Leaf cellB = carriedLeaves.get(l);
+				Renderer.render(renderBuffer, cellB);
+			}
+
+		}
+		
+		renderBuffer.endDraw();
+		
+		
+		/* Compose the final image from the multiple passes */
+		app.resetShader();
+		app.pushMatrix();
+		Navigation.applyTransform(app.g);
+		
+		// Draw the background
+		app.image(backgroundBuffer, 0, 0);
+		
+		//Render the dead leaves
+		if(deadLeaves.size() > 0){
+			app.shader( Renderer.getCellShader() );
+			Renderer.setUniforms(deadLeaves.get(0));
+			for (int l = 0; l < deadLeaves.size(); l++){
+				Leaf cellB = deadLeaves.get(l);
+				Renderer.render(app.g, cellB);
+			}
+		}
+		
+		//Render the food
+		if (foods.size() > 0) {
+			app.shader(Renderer.getFoodShader(), PApplet.POINTS);
+			for (int f = 0; f < foods.size(); f++)
+				Renderer.render(app.g, foods.get(f));
+		}
+		
+		app.popMatrix();
+		
+		//Render the living cells
+		app.resetShader();
+		
+		
+		app.image(renderBuffer, 0, 0);
+		
+		//Render the creatures on top of everything
+		app.pushMatrix();
+		Navigation.applyTransform(app.g);
+		
+		app.blendMode(PApplet.ADD);
+		
+		//TODO: try rendering in a buffer
+		app.tint(0.5f);
+		 
+		app.resetShader();
+
+		for (int l = 0; l < lighties.size(); l++){
+			Lightie creature = lighties.get(l);
+			Renderer.renderLight(app.g, creature);
+		}
+
+		app.noTint();
+		
+		app.blendMode(PApplet.BLEND);
+		
+		app.shader( Renderer.getCreatureShader() );
+		for (int l = 0; l < lighties.size(); l++){
+			Lightie creature = lighties.get(l);
+			Renderer.render(app.g, creature );
+		}
+		
+		//De-reference
+		leaves.clear();
+		deadLeaves.clear();
+		carriedLeaves.clear();
+		
+		app.popMatrix(); //Render pass end
+		
+		if(Configurator.getBooleanSetting("SHOW_DATA_FLAG")){
+			app.text("Observation at: "+WeatherUndergroundClient.getLatestTimestamp(), 20, 20, 1);
+			app.text("Temperature: "+Configurator.getFloatSetting("DATA_TEMPERATURE"), 20, 40, 1);
+			app.text("Humidity: "+Configurator.getFloatSetting("DATA_HUMIDITY"), 20, 60, 1);
+			app.text("FPS: "+app.frameRate, 20, 90, 1);
+			app.text("Cells:" + aCells.size(), 20, 110, 1);
+			app.text("Leaves:" + leavesCells.size(), 20, 130, 1);
+			app.text("Creatures:" + lighties.size(), 20, 150, 1);
+			app.text("Osc:"+lastOscData, 20, 180);
+			app.text("Spread:"+CellA.spreadFactor, 20, 210);
+		}
+		
+		//Run callback, if any
+		callAfterRender();
+
+	}
+	
+	
 	
 	public void callAfterRender() {
 		if (callAfterRender == null) {
@@ -618,7 +612,7 @@ public class Mimodek implements OscMessageListener {
 	 * Handle activity data coming from the Kinect app through an OSC channel
 	 */
 	public void handleMessage(OscMessage message) {
-		//System.out.println(message.arguments().length);
+
 		if(  message.arguments().length != 2)
 			return;
 		
@@ -627,12 +621,14 @@ public class Mimodek implements OscMessageListener {
 		int blobCount = message.get(0).intValue();
 		lastOscData = blobCount;
 		
-		float blobDistance = message.get(1).floatValue();
-		CellA.spreadFactorTween.restart(1f - blobDistance);
+		float blobDistance = 1f - message.get(1).floatValue();
+		if(Math.abs(CellA.spreadFactor - blobDistance) > 0.3)
+			CellA.spreadFactorTween.restart( blobDistance);
 		
 		//If the activity is high enough add some food
-		if( blobCount > 0 /*&& message.get(0).floatValue() > Configurator.getFloatSetting("ACTIVITY_THRESHOLD_FLOAT")*/ ){
-			genetics.addFood();
+		if( blobCount > 0 ){ //TODO:redundant because the tracker will not send a blob count lower than 1 
+			blobCount = Math.min(blobCount, Configurator.getIntegerSetting("MAX_FOOD_FLOW_INT"));
+			foodPile += blobCount;
 			while(blobCount-- > 0){
 				Food.dropFood( (float)Math.random() * FacadeFactory.getFacade().width, (float)Math.random() * FacadeFactory.getFacade().height);
 			}

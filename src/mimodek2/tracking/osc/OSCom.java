@@ -20,7 +20,12 @@ public class OSCom implements OscEventListener{
 		oscP5 = new OscP5(this, inPort);
 		remoteLocation = new NetAddress(remoteHost, outPort);
 		oscP5.addListener(this);
-		}
+		
+	}
+	
+	public String getLocalIP(){
+		return oscP5.ip();
+	}
 	
 	public void sendAddTriggerMessage(String triggerId, float posX, float posY, int radius){
 		OscMessage myMessage = new OscMessage("/mimodek/trigger/add");

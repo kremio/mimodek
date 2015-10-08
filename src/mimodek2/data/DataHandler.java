@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import mimodek2.*;
-
 import processing.core.PApplet;
 
 // TODO: Auto-generated Javadoc
@@ -33,6 +32,9 @@ import processing.core.PApplet;
  * The Class DataHandler.
  */
 public class DataHandler implements Runnable/*, WPMessageListener */{
+	
+	private static final String COMMANDS_URL= "http://krem.io/other/mimodek/consumeCommands.php?key=youplaboum";
+	private static final String REGISTER_IP_URL = "http://krem.io/other/mimodek/registerIP.php?ip=";
 	
 	/** The runner. */
 	Thread runner = null;
@@ -51,6 +53,8 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 	
 	/** The mapping. */
 	public HashMap<String,String> mapping = new HashMap<String,String>();
+
+	private PApplet app;
 	
 	/** The xml receiver. */
 	//private XMLReceiver xmlReceiver;
@@ -104,7 +108,7 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 	 * @return single instance of DataHandler
 	 * @throws Exception 
 	 */
-	public static DataHandler getInstance(MimodekLocation location, PApplet app) throws Exception{
+	public static DataHandler getInstance(MimodekLocation location, PApplet app){
 		if(instance == null)
 			instance = new DataHandler(location, app);
 		return instance;
@@ -117,7 +121,8 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 	 * @param app the app
 	 * @throws Exception 
 	 */
-	private DataHandler(MimodekLocation location, PApplet app) throws Exception {
+	private DataHandler(MimodekLocation location, PApplet app) {
+		this.app = app;
 		this.location = location;
 		
 		if (!Configurator.getBooleanSetting("FAKE_DATA_FLAG")) {
@@ -178,31 +183,84 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 		run = false;
 	}
 	
+	private void registerIp(){
+		String httpQuery = REGISTER_IP_URL+Mimodek.myLocalIP;
+		try{
+			app.loadStrings(httpQuery);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	private void checkForRemoteCommands(){
+		String httpQuery = COMMANDS_URL;
+		
+		try{
+			for(String  command : app.loadStrings(httpQuery)){
+				if( command.equals("showConsole") ){
+					Mimodek.jsConsole.openConsole();
+					continue;
+				}else if( command.equals("hideConsole") ){
+					Mimodek.jsConsole.closeConsole();
+					continue;	
+				}else{
+					Mimodek.jsConsole.runCommand(command);
+				}
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
+		boolean dataSourceOnline = false;
 		while ( run ) {
+			
 			try {
-				if(Configurator.getBooleanSetting("FAKE_DATA_FLAG")){
-					
-					for(int i=0;i<dataInterpolators.size();i++)
-						dataInterpolators.get(i).update();
-					
-				}else if( wunderground != null ){
-					//Query fresh data
-					if(wunderground.readLatestObservation(location, mapping)){
-						for(int i=0;i<dataInterpolators.size();i++)
-							dataInterpolators.get(i).update();
-					}
-				}
+				// Test that we can get a weather station for this location
+				// NOTE: this test has a side effect of setting the starting values for
+				// the weather variable, neat!
+				DataHandler.testDataSource(this.app, location);
+				dataSourceOnline = true;
+			} catch (Exception e) {
+				//e.printStackTrace();
+				// Verbose.debug("No weather station has been found for "+location+". Try the closest biggest city perhaps? \nMimodek will stop.");
+				//System.exit(0);
+				// app.exit(); // no weather station so Mimodek can't run, too bad....
+				System.out.println("Could not connect to WU. Will try again later...");
+			}
+			
+			if (dataSourceOnline) {
+				registerIp();
+				checkForRemoteCommands();
 				
-					
+				try {
+					if (Configurator.getBooleanSetting("FAKE_DATA_FLAG")) {
+
+						for (int i = 0; i < dataInterpolators.size(); i++)
+							dataInterpolators.get(i).update();
+
+					} else if (wunderground != null) {
+						// Query fresh data
+						if (wunderground.readLatestObservation(location, mapping)) {
+							for (int i = 0; i < dataInterpolators.size(); i++)
+								dataInterpolators.get(i).update();
+						}
+					}
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+			
+			dataSourceOnline = false;
+			
+			try {		
 				Thread.sleep((long)(Configurator.getFloatSetting("DATA_REFRESH_RATE") * 60 * 1000));
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-			} catch (Exception ex){
-				ex.printStackTrace();
 			}
 		}
 

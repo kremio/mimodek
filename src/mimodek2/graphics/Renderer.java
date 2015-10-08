@@ -317,8 +317,9 @@ public class Renderer {
 		renderBuffer.stroke(Configurator.getFloatSetting("FOOD_R"),
 				Configurator.getFloatSetting("FOOD_G"),
 				Configurator.getFloatSetting("FOOD_B"), 1f);
-		renderBuffer.stroke(1f);
-		foodShader.set("weight", /*food.z */ /*Configurator.getFloatSetting("FOOD_SIZE") */ 100f);
+		//renderBuffer.stroke(0.8f,0.8f, 1f);
+		renderBuffer.strokeWeight(food.z * Configurator.getFloatSetting("FOOD_SIZE"));
+		//foodShader.set("weight", /*food.z */ /*Configurator.getFloatSetting("FOOD_SIZE") */ 100f);
 		//app.strokeWeight(500f /*food.z * Configurator.getFloatSetting("FOOD_SIZE")*/);
 		renderBuffer.point(food.x, food.y);
 		renderBuffer.popStyle();

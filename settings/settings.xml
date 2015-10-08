@@ -44,10 +44,10 @@
 <setting name="FACADE_TYPE_INT" description="Set which type of display to use. (PRADO_FACADE)1: Medialab Prado facade, (FULL_WINDOW)2: The size of the Processing sketch, (MINIPAL)3: Half the size of the PAL format">2</setting>
 <setting name="FAKE_DATA_FLAG" description="Set to true to control the data value from the UI.">false</setting>
 <setting name="FOOD_B" description="Range between 0f and 1f. The blue component of the food color.">1.0</setting>
-<setting name="FOOD_G" description="Range between 0f and 1f. The green component of the food color.">1.0</setting>
-<setting name="FOOD_R" description="Range between 0f and 1f. The red component of the food color.">1.0</setting>
+<setting name="FOOD_G" description="Range between 0f and 1f. The green component of the food color.">0.25</setting>
+<setting name="FOOD_R" description="Range between 0f and 1f. The red component of the food color.">0.25</setting>
 <setting name="FOOD_SCENT_EVAPORATION" description="How fast the creatures pheromones evaporate.">0.1</setting>
-<setting name="FOOD_SIZE" description="Size of a piece of food.">1.0</setting>
+<setting name="FOOD_SIZE" description="Size of a piece of food.">8.0</setting>
 <setting name="GALLERY_FOLDER_STR" description="Path to the folder on SFTP_HOST where screen shots will be delivered.">/home/mimodek/public_html/blog/MimoLife</setting>
 <setting name="GLOBAL_SCALING" description="Useful to magnify/shrink the image, leave to 1 when Mimodek is on display or when fiming in PAL">1.0</setting>
 <setting name="GL_TEXTURE_MIN_FILTER_INT" description="Define the texture filtering. Might or might not do anything depending on the hardware">4</setting>

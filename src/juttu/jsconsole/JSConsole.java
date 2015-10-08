@@ -383,6 +383,10 @@ public class JSConsole implements CaretListener{
 		consoleFrame.toFront();
 	}
 	
+	public void closeConsole() {
+		consoleFrame.setVisible(false);
+	}
+	
 	public String getCommand(){
 		int len = editorPane.getDocument().getLength();
 		try {
@@ -499,6 +503,8 @@ public class JSConsole implements CaretListener{
 		}
 		
 	}
+
+
 	
 	/*
 	public Object getJsVal(String name){

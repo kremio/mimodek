@@ -547,15 +547,15 @@ public class Leaf extends Cell {
 	 * 
 	 */
 	public static ArrayList<Leaf> unRootLeaves(){
-		ArrayList<Leaf> rootCells = new ArrayList<Leaf>();
+		ArrayList<Leaf> rootLeaves = new ArrayList<Leaf>();
 		//Update the levels and collect all root cells
 		for(Leaf leaf : Mimodek.leavesCells){
-			if( leaf.carrierA == null && leaf.carrierB == null && leaf.isLeafOffCellA() && ((CellA)leaf.anchor).level < 1.0f ){
-				rootCells.add(leaf);
+			if( leaf.carrierA == null && leaf.carrierB == null && leaf.isLeafOffCellA() && ((CellA)leaf.anchor).level <= 0.5f ){
+				rootLeaves.add(leaf);
 			}
 		}
 		
-		return rootCells;
+		return rootLeaves;
 	}
 
 	public void startToLift(Lightie lightie) {

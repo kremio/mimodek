@@ -73,7 +73,7 @@ public class MimodekPApplet extends PApplet{
 		}
 		
 		if(key == 'c'){
-			mimodek.jsConsole.openConsole();
+			Mimodek.jsConsole.openConsole();
 		}
 		
 	}

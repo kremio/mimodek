@@ -8,14 +8,14 @@ attribute vec4 color;
 attribute vec2 offset;
 
 varying vec4 vertColor;
-varying vec2 center;
-varying vec2 pos;
+varying vec2 texCoord;
 
 void main() {
   vec4 clip = transform * vertex;
   gl_Position = clip + projection * vec4(offset, 0, 0);
   
+  float weight = abs(offset.x)*2.0;
+  texCoord = (vec2(0.5) + offset / weight);
+
   vertColor = color;
-  center = clip.xy;
-  pos = offset;
 }
