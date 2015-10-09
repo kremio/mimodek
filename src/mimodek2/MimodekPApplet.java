@@ -40,7 +40,6 @@ public class MimodekPApplet extends PApplet{
 	}
 
 	public void draw() {
-		mimodek.callAfterRender();
 		background( Configurator.getBooleanSetting("FULLSCREEN_FLAG") ? 0 :.33f );
 		mimodek.update();
 		mimodek.draw();

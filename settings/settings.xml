@@ -42,7 +42,7 @@
 <setting name="DATA_TEMPERATURE" description="The current temperature. This is set at runtime, but you can specify a default value.">27.519997</setting>
 <setting name="DEBUG_FLAG" description="Toggle debug message.">true</setting>
 <setting name="FACADE_TYPE_INT" description="Set which type of display to use. (PRADO_FACADE)1: Medialab Prado facade, (FULL_WINDOW)2: The size of the Processing sketch, (MINIPAL)3: Half the size of the PAL format">2</setting>
-<setting name="FAKE_DATA_FLAG" description="Set to true to control the data value from the UI.">false</setting>
+<setting name="FAKE_DATA_FLAG" description="Set to true to control the data value from the UI.">true</setting>
 <setting name="FOOD_B" description="Range between 0f and 1f. The blue component of the food color.">1.0</setting>
 <setting name="FOOD_G" description="Range between 0f and 1f. The green component of the food color.">0.25</setting>
 <setting name="FOOD_R" description="Range between 0f and 1f. The red component of the food color.">0.25</setting>

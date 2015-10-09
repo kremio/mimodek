@@ -4,9 +4,11 @@ import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import oscP5.OscMessage;
 import juttu.jsconsole.JSConsole;
+import mimodek2.serializer.LoaderSaver;
 import mimodek2.tracking.*;
 import mimodek2.tracking.osc.OSCom;
 import mimodek2.tracking.osc.OscMessageListener;
@@ -47,7 +49,6 @@ public class Mimodek implements OscMessageListener {
 	/** The creatures. */
 	public  static ArrayList<Lightie> lighties = new ArrayList<Lightie>();
 	
-	public  static ArrayList<HighLightie> highLighties = new ArrayList<HighLightie>();
 
 	/** The scent map. */
 	public static QTree scentMap;
@@ -57,8 +58,6 @@ public class Mimodek implements OscMessageListener {
 	
 	public static PGraphics renderBuffer;
 	public static PGraphics backgroundBuffer;
-	
-	public PImage cellsAPass;
 	
 	/* JS Console */
 	public static JSConsole jsConsole;
@@ -84,22 +83,9 @@ public class Mimodek implements OscMessageListener {
 	
 	public static String myLocalIP = "";
 	
-	class UpdateRunnable implements Runnable{
-		
-		public void run() {
-			while(true){
-				scentMap.update();
-				
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
-				
-			}
-		}
-		
-	}
+	public static boolean keepUpdateThreadRunning = true;
+	
+	
 	
 	public static void useRealData() throws Exception{
 		DataHandler.getInstance(null, null).useRealData(app);
@@ -110,20 +96,35 @@ public class Mimodek implements OscMessageListener {
 	}
 	
 	public static void reset(){
-		scentMap = new QTree(0, 0, FacadeFactory.getFacade().width, FacadeFactory.getFacade().height, 1);
+		keepUpdateThreadRunning = false;
+		
+		
 		genetics = new LSystem("ab", app);
 
 		allCells = new ArrayList<Cell>();
 		aCells = new ArrayList<CellA>();
-		leavesCells = new ArrayList<Leaf>();
+		cellsToFossilize = new ArrayList<CellA>();
 		growingCells = new ArrayList<Cell>();
+		lighties = new ArrayList<Lightie>();
+		leavesCells = new ArrayList<Leaf>();
+		Leaf.toBePickedUp = new HashSet<Leaf>();
+		
 
 		foods = new ArrayList<Food>();
 		foodAvg = new PVector(0, 0);
-		lighties = new ArrayList<Lightie>();
+		
+		
+		//Flush tweens
+		Tween.flush();
 		
 		//Good idea to clean up the memory at this point
 		System.gc();
+	}
+	
+	public static void restartUpdateThread(){
+		keepUpdateThreadRunning = true;
+		updateThread = new Thread(new UpdateRunnable( ));
+		updateThread.start();
 	}
 	
 	public Mimodek(PApplet app, int facadeType){
@@ -187,9 +188,10 @@ public class Mimodek implements OscMessageListener {
 		a.maturity = 1.0f;
 		aCells.add(a);
 		allCells.add(a);
-		highLighties.add( HighLightie.spawn() );
-		highLighties.add( HighLightie.spawn() );
-		highLighties.add( HighLightie.spawn() );
+		
+		HighLightie.spawn();
+		HighLightie.spawn();
+		HighLightie.spawn();
 		//reset = false;
 		
 		//Init the renderer
@@ -207,14 +209,20 @@ public class Mimodek implements OscMessageListener {
 			e.printStackTrace();
 		}
 		
-		updateThread = new Thread(new UpdateRunnable( ));
-		updateThread.start();
+		restartUpdateThread();
 		dataHandler.start();
 		
 		//OSC
 		oscCommunication = new OSCom(3000, "localhost", 3001);
 		myLocalIP = oscCommunication.getLocalIP();
 		oscCommunication.addListener("/mimodek/blobs/", this);
+		
+		if( Configurator.getBooleanSetting("LOAD_FROM_FILE_FLAG" ) ){
+			if(LoaderSaver.loadFromFile()){
+				System.out.println("Loading previous state from disk...");
+			}
+			
+		}
 	}
 	
 	
@@ -247,6 +255,7 @@ public class Mimodek implements OscMessageListener {
 		for(Leaf leaf: toBePickedUp){
 			leaf.makeEdible();
 		}
+
 		
 		//Feed the beast
 		while(foodPile-- > 0)
@@ -319,13 +328,9 @@ public class Mimodek implements OscMessageListener {
 			CellA rootCell = cellsToFossilize.get(c);
 			if(rootCell.level <= 0.5f){
 				rootCells.add(rootCell);
-				cellsToFossilize.remove(c);
-				//new Tween(rootCell, "level", 0f, 5*60000);
+				cellsToFossilize.remove(rootCell);
 			}
 		}
-		
-		
-		
 		
 		//System.out.println("Removed one cell and "+rootLeaves.size()+" leaves.");
 		
@@ -357,6 +362,7 @@ public class Mimodek implements OscMessageListener {
 		if (rootLeaves.size() > 0) {
 			for (Leaf cellB : rootLeaves) {
 				// De-reference
+				Mimodek.growingCells.remove(cellB);
 				Mimodek.leavesCells.remove(cellB);
 				Mimodek.allCells.remove(cellB);
 				Renderer.renderWithoutShader(backgroundBuffer, cellB);
@@ -370,9 +376,10 @@ public class Mimodek implements OscMessageListener {
 
 			for (CellA rootCell : rootCells) {
 				// De-reference
+				Mimodek.growingCells.remove(rootCell);
 				Mimodek.aCells.remove(rootCell);
 				Mimodek.allCells.remove(rootCell);
-
+				rootCell.level = 1.0f;
 				Renderer.setTime((time + rootCell.id * 10f) / 1000f * 0.5f);
 				Renderer.render(backgroundBuffer, rootCell);
 			}
@@ -510,7 +517,8 @@ public class Mimodek implements OscMessageListener {
 		
 		//Render the food
 		if (foods.size() > 0) {
-			app.shader(Renderer.getFoodShader(), PApplet.POINTS);
+			//app.shader(Renderer.getFoodShader(), PApplet.POINTS);
+			app.resetShader();
 			for (int f = 0; f < foods.size(); f++)
 				Renderer.render(app.g, foods.get(f));
 		}
@@ -595,6 +603,7 @@ public class Mimodek implements OscMessageListener {
 		callArgumentsAfterRender = null;
 	}
 	
+	
 	/*
 	 * Handle data incoming from the Tracking application
 	 */
@@ -635,4 +644,22 @@ public class Mimodek implements OscMessageListener {
 		}
 		
 	}
+	
+	public static String getSketchPath(String where){
+		return app.sketchPath(where);
+	}
+
+	public static void loadBackgroundImage(String imageFile) {
+		backgroundBuffer.beginDraw();
+		backgroundBuffer.hint(PApplet.DISABLE_DEPTH_MASK);
+		backgroundBuffer.textureMode(PApplet.NORMAL);
+		backgroundBuffer.colorMode(PApplet.RGB, 1.0f);
+		backgroundBuffer.strokeCap(PApplet.SQUARE);
+		backgroundBuffer.blendMode(PApplet.BLEND);
+		backgroundBuffer.ortho(); // camera
+		backgroundBuffer.background(0,0);
+		backgroundBuffer.image( app.loadImage(imageFile),0,0 );
+		backgroundBuffer.endDraw();
+	}
+
 }

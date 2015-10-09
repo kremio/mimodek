@@ -10,6 +10,10 @@
 			</manifest>
 			<fileset dir="/Volumes/Slowee/Users/Jonsku/Documents/workspace/Mimodek2/bin"/>
 		</jar>
+		
+		<delete dir="/Volumes/Slowee/Users/Jonsku/Desktop/Mimodek/saved_states"/>
+		<mkdir dir="/Volumes/Slowee/Users/Jonsku/Desktop/Mimodek/saved_states"/>
+		
 		<delete dir="/Volumes/Slowee/Users/Jonsku/Desktop/Mimodek/Mimodek_lib"/>
 		<mkdir dir="/Volumes/Slowee/Users/Jonsku/Desktop/Mimodek/Mimodek_lib"/>
 		<copy file="/Volumes/Slowee/Users/Jonsku/Documents/workspace/Mimodek2/core.jar" todir="/Volumes/Slowee/Users/Jonsku/Desktop/Mimodek/Mimodek_lib"/>

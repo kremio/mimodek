@@ -121,6 +121,9 @@ public class Configurator {
 		Configurator.setSetting("FULLSCREEN_FLAG", false, "True to launch mimodek in fullscreen");
 		Configurator.setSetting("WINDOW_WIDTH_INT",960,"The width of the window when displaying in FULLSCREEN");
 		Configurator.setSetting("WINDOW_HEIGHT_INT",640,"The height of the window when displaying in FULLSCREEN");
+		Configurator.setSetting("LOAD_FROM_FILE_FLAG",true,"If true, attempt to load previous state from file on startup");
+		Configurator.setSetting("AUTO_SAVE_STATE_FLAG",true,"If true, attempt to save the current state to disk. Make sure you have disk space!");
+		Configurator.setSetting("AUTO_SAVE_DELAY_LONG", 15 * 60 * 60 * 1000,"Duration in milliseconds between state saving.");
 		
 		/*
 		 * Debug/filming settings
@@ -200,6 +203,7 @@ public class Configurator {
 		Configurator.setSetting("FOOD_R",1f,"Range between 0f and 1f. The red component of the food color.");
 		Configurator.setSetting("FOOD_G",1f,"Range between 0f and 1f. The green component of the food color.");
 		Configurator.setSetting("FOOD_B",1f,"Range between 0f and 1f. The blue component of the food color.");
+		Configurator.setSetting("FOOD_A",1f,"Range between 0f and 1f. The alpha component of the food color.");
 		Configurator.setSetting("FOOD_SCENT_EVAPORATION",0.1f,"How fast the creatures pheromones evaporate.");
 		Configurator.setSetting("FOOD_MAX",100,"How many food pieces can be shown at any time.");
 		Configurator.setSetting("MAX_FOOD_FLOW_INT",5,"How many food pieces can be shown at any time.");

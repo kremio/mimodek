@@ -117,6 +117,8 @@ public class Cell implements StatefulObject{
  		state.put("id", id);
  		state.put("posX", pos.x);
  		state.put("posY", pos.y);
+ 		state.put("posZ", pos.z);
+ 		
  		state.put("maturity", maturity);
  		state.put("currentMaturity", currentMaturity);
  		if( anchor != null ){
@@ -152,10 +154,11 @@ public class Cell implements StatefulObject{
 	public void setState(HashMap<String, Object> state){
 		
 		//Deal with vectors
-		if( state.containsKey("posX") && state.containsKey("posY") ){
-			this.pos = new PVector(Float.class.cast( state.get("posX") ), Float.class.cast( state.get("posY") ));
+		if( state.containsKey("posX") && state.containsKey("posY") && state.containsKey("posZ") ){
+			this.pos = new PVector(Float.class.cast( state.get("posX") ), Float.class.cast( state.get("posY")),  Float.class.cast( state.get("posZ") ));
 			state.remove("posX");
 			state.remove("posY");
+			state.remove("posZ");
 		}
 		
 		Class<?> thisClass = this.getClass();

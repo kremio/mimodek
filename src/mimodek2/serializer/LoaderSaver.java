@@ -1,8 +1,10 @@
 package mimodek2.serializer;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -12,10 +14,38 @@ import java.util.HashMap;
 import mimodek2.Mimodek;
 import mimodek2.bio.*;
 
-public class LoaderSaver {
+public class LoaderSaver implements FilenameFilter {
+	
+	private static final String SAVE_PATH = "saved_states/";
 
 	public static void loadFromFile(String loadFrom){
 		loadFromFile(loadFrom, true);
+	}
+	
+	public static boolean loadFromFile(){
+		File lastStateFile;
+		//Get a list of all the *.mmk files
+		File dir = new File(Mimodek.getSketchPath(SAVE_PATH));     
+		File[] files = dir.listFiles(new LoaderSaver());
+		
+		if( files.length < 1)
+			return false;
+		
+		//Find the most recent file
+		if( files.length == 1){
+			lastStateFile = files[0];
+		}else{
+			lastStateFile = files[0];
+			for(int i = 1; i < files.length; i++){
+				if( lastStateFile.lastModified() < files[i].lastModified())
+					lastStateFile = files[i];
+			}
+		}
+		
+		
+		
+		loadFromFile(SAVE_PATH+lastStateFile.getName(), true);
+		return true;
 	}
 	
 	public static void loadFromFile(String loadFrom, Boolean scheduleOnly){
@@ -50,7 +80,7 @@ public class LoaderSaver {
 			
 			System.out.println("Loaded state:\n"+loadedState);
 			
-			HashMap<Long, Cell> cells = new HashMap<Long, Cell>( loadedState.cells_A.size() + loadedState.cells_B.size() + loadedState.creatures.size()  );
+			HashMap<Long, Cell> cells = new HashMap<Long, Cell>( loadedState.cells_A.size() + loadedState.cells_Leaves.size() + loadedState.creatures.size()  );
 			
 			//Clear current state
 			Mimodek.reset();
@@ -66,14 +96,19 @@ public class LoaderSaver {
 				Mimodek.allCells.add(cellA);
 			}
 			
-			Leaf cellB;
-			for( HashMap<String, Object> cellBState : loadedState.cells_B ){
-				cellB = new Leaf(null, 0);
-				cellB.setState(cellBState);
-				cells.put(cellB.id, cellB);
-				Cell.nextId = Math.max(cellB.id, Cell.nextId);
-				Mimodek.leavesCells.add(cellB);
-				Mimodek.allCells.add(cellB);
+			Leaf leaf;
+			for( HashMap<String, Object> leavesState : loadedState.cells_Leaves ){
+				leaf = new Leaf(null, 0);
+				leaf.setState(leavesState);
+				cells.put(leaf.id, leaf);
+				Cell.nextId = Math.max(leaf.id, Cell.nextId);
+				Mimodek.leavesCells.add(leaf);
+				Mimodek.allCells.add(leaf);
+			/*	
+				if( leaf.id == 154 ){
+					System.out.println("?");
+				}
+				*/
 			}
 			
 			Lightie creature;
@@ -94,9 +129,16 @@ public class LoaderSaver {
 			for( HashMap<String, Object> cellAState : loadedState.cells_A ){
 				cells.get( (Long)cellAState.get("id") ).link(cells, cellAState);
 			}
-			for( HashMap<String, Object> cellBState : loadedState.cells_B ){
-				cells.get( (Long)cellBState.get("id") ).link(cells, cellBState);
+			
+			for( HashMap<String, Object> leavesState : loadedState.cells_Leaves ){
+				cells.get( (Long)leavesState.get("id") ).link(cells, leavesState);
+				if( cells.get( (Long)leavesState.get("id") ).anchor == null ){
+					Mimodek.leavesCells.remove( cells.get( (Long)leavesState.get("id") ));
+					Mimodek.allCells.remove( cells.get( (Long)leavesState.get("id") ));
+					cells.remove( (Long)leavesState.get("id") );
+				}
 			}
+			
 			for( HashMap<String, Object> creatureState : loadedState.creatures ){
 				cells.get( (Long)creatureState.get("id") ).link(cells, creatureState);
 			}
@@ -106,8 +148,26 @@ public class LoaderSaver {
 				Mimodek.growingCells.add( cells.get(cellId) );
 			}
 			
+			//Register cells to fossilize
+			for( long cellId : loadedState.cellsToFossilize){
+				Mimodek.cellsToFossilize.add( (CellA)cells.get(cellId) );
+			}
+			
+			//Register leaves to be picked up
+			for( long cellId : loadedState.leavesToBePickedUp){
+				if( cells.get(cellId) == null)
+					continue;
+				if( cells.get( cellId ).anchor == null )
+					continue;
+
+				Leaf.toBePickedUp.add( (Leaf)cells.get(cellId) );
+			}
+			
 			//Load genetics data
 			Mimodek.genetics.setState( loadedState.lSystem );
+			
+			Mimodek.loadBackgroundImage(SAVE_PATH+loadedState.timestamp+".png");
+			
 			
 			
 		} catch (FileNotFoundException e) {
@@ -121,7 +181,13 @@ public class LoaderSaver {
 			e.printStackTrace();
 		}
 		
+		Mimodek.restartUpdateThread();
+		
 		System.gc();
+	}
+	
+	public static void saveToFile(){
+		saveToFile(null, true);
 	}
 	
 	public static void saveToFile(String saveTo){
@@ -147,9 +213,13 @@ public class LoaderSaver {
 		}
 		
 		
-		State state = new State(Mimodek.aCells, Mimodek.leavesCells, Mimodek.lighties, Mimodek.growingCells, Mimodek.genetics);
 		
+		State state = new State(Mimodek.aCells, Mimodek.cellsToFossilize, Mimodek.leavesCells, Leaf.toBePickedUp, Mimodek.lighties, Mimodek.growingCells, Mimodek.genetics);
+		Mimodek.backgroundBuffer.save(SAVE_PATH+state.timestamp+".png");
 		System.out.println("Saved state:\n"+state);
+		
+		saveTo = saveTo == null ? SAVE_PATH+state.timestamp+".mmk" : saveTo;
+			
 		
 		try {
 			FileOutputStream fos = new FileOutputStream(saveTo);
@@ -169,5 +239,12 @@ public class LoaderSaver {
 		
 		System.gc();
 		
+	}
+
+	public boolean accept(File dir, String fileName) {
+		if (fileName.endsWith(".mmk")) {
+			            return true;
+		}
+		return false;
 	}
 }

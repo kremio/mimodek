@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import mimodek2.*;
+import mimodek2.serializer.LoaderSaver;
 import processing.core.PApplet;
 
 // TODO: Auto-generated Javadoc
@@ -61,6 +62,8 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 	
 	/** The instance counter. */
 	public static int instanceCounter = 0;
+	
+	public static long timeToNextSave = 0;
 	
 	/** The instance. */
 	protected static DataHandler instance;
@@ -122,6 +125,7 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 	 * @throws Exception 
 	 */
 	private DataHandler(MimodekLocation location, PApplet app) {
+		
 		this.app = app;
 		this.location = location;
 		
@@ -134,7 +138,12 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 		
 		runner = new Thread(this);
 		instanceCounter++;
+		updateTimeToSave();
 		Verbose.debug("I'm instance #"+instanceCounter);
+	}
+	
+	private void updateTimeToSave(){
+		timeToNextSave = System.currentTimeMillis() + Configurator.getIntegerSetting("AUTO_SAVE_DELAY_LONG");
 	}
 	
 	public void useRealData(PApplet app){
@@ -219,40 +228,36 @@ public class DataHandler implements Runnable/*, WPMessageListener */{
 		boolean dataSourceOnline = false;
 		while ( run ) {
 			
-			try {
-				// Test that we can get a weather station for this location
-				// NOTE: this test has a side effect of setting the starting values for
-				// the weather variable, neat!
-				DataHandler.testDataSource(this.app, location);
-				dataSourceOnline = true;
-			} catch (Exception e) {
-				//e.printStackTrace();
-				// Verbose.debug("No weather station has been found for "+location+". Try the closest biggest city perhaps? \nMimodek will stop.");
-				//System.exit(0);
-				// app.exit(); // no weather station so Mimodek can't run, too bad....
-				System.out.println("Could not connect to WU. Will try again later...");
+			if (Configurator.getBooleanSetting("AUTO_SAVE_STATE_FLAG") && System.currentTimeMillis() > timeToNextSave ){
+					LoaderSaver.saveToFile();
+					updateTimeToSave();
 			}
 			
+			// Test that we can get a weather station for this location
+			// NOTE: this test has a side effect of setting the starting values for
+			// the weather variable, neat!
+			if (Configurator.getBooleanSetting("FAKE_DATA_FLAG")) {
+				dataSourceOnline = false;
+				for (int i = 0; i < dataInterpolators.size(); i++)
+					dataInterpolators.get(i).update();
+			} else if (wunderground != null) {
+				// Query fresh data
+				try {
+					if (wunderground.readLatestObservation(location, mapping)) {
+						for (int i = 0; i < dataInterpolators.size(); i++)
+							dataInterpolators.get(i).update();
+					}
+					dataSourceOnline = true;
+				} catch (Exception ex) {
+					// ex.printStackTrace();
+					dataSourceOnline = false;
+				}
+
+			}
+
 			if (dataSourceOnline) {
 				registerIp();
 				checkForRemoteCommands();
-				
-				try {
-					if (Configurator.getBooleanSetting("FAKE_DATA_FLAG")) {
-
-						for (int i = 0; i < dataInterpolators.size(); i++)
-							dataInterpolators.get(i).update();
-
-					} else if (wunderground != null) {
-						// Query fresh data
-						if (wunderground.readLatestObservation(location, mapping)) {
-							for (int i = 0; i < dataInterpolators.size(); i++)
-								dataInterpolators.get(i).update();
-						}
-					}
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}
 			}
 			
 			dataSourceOnline = false;

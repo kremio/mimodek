@@ -120,5 +120,10 @@ public class Tween {
 			e.printStackTrace();
 		}
 	}
+
+	//Remove all the active tweens
+	public static void flush() {
+		activeTweens = new ArrayList<Tween>();
+	}
 	
 }

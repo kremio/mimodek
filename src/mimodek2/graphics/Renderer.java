@@ -187,7 +187,7 @@ public class Renderer {
 		//Draw the stem	
 		if (cell.currentMaturity > 0.4f) {
 			renderBuffer.strokeWeight(1.0f);
-			renderBuffer.stroke(1.0f, (cell.moving ? CellA.MAX_DEPTH : ((CellA)anchor).depth()));
+			renderBuffer.stroke(1.0f, (cell.moving ? CellA.MAX_DEPTH : (anchor instanceof CellA ? ((CellA)anchor).depth() : CellA.depthForLevel(1.0f)) ) );
 			renderBuffer.noFill();
 			if (cell.carrierA != null && cell.carrierB != null
 					&& cell.carrierA.readyToLift && cell.carrierB.readyToLift) {
@@ -245,7 +245,7 @@ public class Renderer {
 			cellShader.set("depth", CellA.MIN_DEPTH);
 		}else{
 			
-			float depth = cell.moving ? CellA.MAX_DEPTH : ((CellA)anchor).depth();
+			float depth = cell.moving ? CellA.MAX_DEPTH : (anchor instanceof CellA ? ((CellA)anchor).depth() : CellA.depthForLevel(1.0f) );
 			cellShader.set("depth", depth);
 			c = cell.color;	
 		}
@@ -313,10 +313,10 @@ public class Renderer {
 	
 	public static void render(PGraphics renderBuffer, Food food){
 		renderBuffer.pushStyle();
-		
+		renderBuffer.strokeCap(PApplet.ROUND);
 		renderBuffer.stroke(Configurator.getFloatSetting("FOOD_R"),
 				Configurator.getFloatSetting("FOOD_G"),
-				Configurator.getFloatSetting("FOOD_B"), 1f);
+				Configurator.getFloatSetting("FOOD_B"), Configurator.getFloatSetting("FOOD_A"));
 		//renderBuffer.stroke(0.8f,0.8f, 1f);
 		renderBuffer.strokeWeight(food.z * Configurator.getFloatSetting("FOOD_SIZE"));
 		//foodShader.set("weight", /*food.z */ /*Configurator.getFloatSetting("FOOD_SIZE") */ 100f);

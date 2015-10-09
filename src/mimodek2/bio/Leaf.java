@@ -98,14 +98,14 @@ public class Leaf extends Cell {
 		state.put("nextOffsetBrightness", nextOffsetBrightness);
 		state.put("distanceModifier", distanceModifier);
 		state.put("moving", moving);
-		state.put("eatable", edible);
+		state.put("edible", edible);
 		state.put("color", color);
 
 		if (carrierA != null)
-			state.put("creatureA", carrierA.id);
+			state.put("carrierA", carrierA.id);
 
 		if (carrierB != null)
-			state.put("creatureB", carrierB.id);
+			state.put("carrierB", carrierB.id);
 
 		if (dropMeAtA != null) {
 			state.put("dropMeAtAX", dropMeAtA.x);
@@ -116,8 +116,8 @@ public class Leaf extends Cell {
 			state.put("dropMeAtBX", dropMeAtB.x);
 			state.put("dropMeAtBY", dropMeAtB.y);
 		}
-
-		if (!moving && edible && anchor != null) {
+			
+		if ( anchor != null && !(anchor instanceof CellA) ) {
 			state.remove("anchor");
 			state.put("dropX", anchor.pos.x);
 			state.put("dropY", anchor.pos.y);
@@ -212,7 +212,6 @@ public class Leaf extends Cell {
 	 */
 	@Override
 	public float radius() {
-		// TODO Auto-generated method stub
 		return Configurator.getFloatSetting("CELLB_RADIUS");
 	}
 
@@ -402,9 +401,10 @@ public class Leaf extends Cell {
 		} else if (moving) {
 			currentAngle = PApplet.atan2(carrierA.pos.y - anchor.pos.y, carrierA.pos.x - anchor.pos.x);
 		}
-
+		
 		pos.x = anchor.pos.x + PApplet.cos(currentAngle)
 				* (radius() + minDistanceToA + distanceModifier * maxDistanceToA);
+
 		pos.y = anchor.pos.y + PApplet.sin(currentAngle)
 				* (radius() + minDistanceToA + distanceModifier * maxDistanceToA);
 
@@ -550,7 +550,12 @@ public class Leaf extends Cell {
 		ArrayList<Leaf> rootLeaves = new ArrayList<Leaf>();
 		//Update the levels and collect all root cells
 		for(Leaf leaf : Mimodek.leavesCells){
-			if( leaf.carrierA == null && leaf.carrierB == null && leaf.isLeafOffCellA() && ((CellA)leaf.anchor).level <= 0.5f ){
+			if( leaf.isLeafOffCellA() && ((CellA)leaf.anchor).level <= 0.5f ){
+				if( leaf.carrierA != null  ){
+					leaf.carrierA.leaf = null;
+					leaf.carrierA = null;
+				}
+				leaf.setAnchor(new Cell(new PVector(leaf.anchor.pos.x, leaf.anchor.pos.y)));
 				rootLeaves.add(leaf);
 			}
 		}

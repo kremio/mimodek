@@ -179,6 +179,10 @@ public class CellA extends Cell {
 		return MIN_DEPTH + (level / maxLevel) * (MAX_DEPTH - MIN_DEPTH);
 	}
 	
+	public static float depthForLevel( float level){
+		return MIN_DEPTH + (level / maxLevel) * (MAX_DEPTH - MIN_DEPTH);
+	}
+	
 	/* (non-Javadoc)
 	 * @see MimodekV2.Cell#update(processing.core.PApplet)
 	 */

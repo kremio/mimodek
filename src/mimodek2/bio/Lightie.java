@@ -46,9 +46,6 @@ public class Lightie extends Cell {
 	/** The last food pos. */
 	public PVector lastFoodPos;
 
-	/** The cell b. */
-	public Leaf leaf;
-
 	/** The energy. */
 	public float energy;
 
@@ -64,18 +61,29 @@ public class Lightie extends Cell {
 	/** The food sight. */
 	public PVector foodSight;
 	
-	private CellA cellToFeed;
+	/** The leaf to carry. */
+	public Leaf leaf;
+	
+	/** Where to bring back the food */
+	public CellA cellToFeed;
 
 	public HashMap<String, Object> getState() {
 		HashMap<String, Object> state = super.getState();
 
 		state.put("velX", vel.x);
 		state.put("velY", vel.y);
+		state.put("velZ", vel.z);
+		
 		state.put("accX", acc.x);
 		state.put("accY", acc.y);
+		state.put("accZ", acc.z);
 		state.put("hasFood", hasFood);
+		
 		if (leaf != null)
-			state.put("cellB", leaf.id);
+			state.put("leaf", leaf.id);
+		
+		if (cellToFeed != null)
+			state.put("cellToFeed", cellToFeed.id);
 
 		state.put("energy", energy);
 		state.put("readyToLift", readyToLift);
@@ -97,15 +105,17 @@ public class Lightie extends Cell {
 	public void setState(HashMap<String, Object> state) {
 
 		// Deal with vectors
-		if (state.containsKey("velX") && state.containsKey("velY")) {
-			this.vel = new PVector(Float.class.cast(state.get("velX")), Float.class.cast(state.get("velY")));
+		if (state.containsKey("velX") && state.containsKey("velY") && state.containsKey("velZ")) {
+			this.vel = new PVector(Float.class.cast(state.get("velX")), Float.class.cast(state.get("velY")), Float.class.cast(state.get("velZ")));
 			state.remove("velX");
 			state.remove("velY");
+			state.remove("velZ");
 		}
-		if (state.containsKey("accX") && state.containsKey("accY")) {
-			this.acc = new PVector(Float.class.cast(state.get("accX")), Float.class.cast(state.get("accY")));
+		if (state.containsKey("accX") && state.containsKey("accY") && state.containsKey("accZ")) {
+			this.acc = new PVector(Float.class.cast(state.get("accX")), Float.class.cast(state.get("accY")), Float.class.cast(state.get("accZ")));
 			state.remove("accX");
 			state.remove("accY");
+			state.remove("accZ");
 		}
 		if (state.containsKey("foodSightX") && state.containsKey("foodSightY")) {
 			this.foodSight = new PVector(Float.class.cast(state.get("foodSightX")), Float.class.cast(state
@@ -113,6 +123,15 @@ public class Lightie extends Cell {
 			state.remove("foodSightX");
 			state.remove("foodSightY");
 		}
+		
+		if (state.containsKey("lastFoodPosX") && state.containsKey("lastFoodPosY")) {
+			this.foodSight = new PVector(Float.class.cast(state.get("lastFoodPosX")), Float.class.cast(state
+					.get("lastFoodPosY")));
+			state.remove("lastFoodPosX");
+			state.remove("lastFoodPosY");
+		}
+		
+		state.remove("highLander");
 
 		super.setState(state);
 
@@ -127,7 +146,8 @@ public class Lightie extends Cell {
 	public Lightie(PVector pos) {
 		super(pos);
 		this.pos = pos;
-		this.pos.z = CellA.MIN_DEPTH;
+		if( this.pos != null)
+			this.pos.z = CellA.MIN_DEPTH;
 		acc = new PVector(0, 0, 0);
 		vel = new PVector((float) (-1 + Math.random() * 2), (float) (-1 + Math.random() * 2), (float)Math.random());
 
